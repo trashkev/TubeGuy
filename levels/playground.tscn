@@ -18,16 +18,8 @@ texture = ExtResource("1_53bfj")
 [node name="Platform" parent="." instance=ExtResource("3_meopj")]
 position = Vector2(556, 631)
 
-[node name="Platform2" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(329, 512)
-rotation = 0.745267
-
-[node name="Platform3" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(778, 539)
-rotation = -0.916088
-
 [node name="StaticBody2D" type="StaticBody2D" parent="." groups=["environment"]]
-position = Vector2(677, 422)
+position = Vector2(368, 342)
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D"]
 texture = ExtResource("1_aktf5")
@@ -38,7 +30,7 @@ region_rect = Rect2(336, 0, 80, 80)
 shape = SubResource("CircleShape2D_og0pb")
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="." groups=["environment"]]
-position = Vector2(452, 396)
+position = Vector2(207, 478)
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D2"]
 texture = ExtResource("1_aktf5")
@@ -46,17 +38,6 @@ region_enabled = true
 region_rect = Rect2(336, 0, 80, 80)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
-shape = SubResource("CircleShape2D_og0pb")
-
-[node name="StaticBody2D3" type="StaticBody2D" parent="." groups=["environment"]]
-position = Vector2(646, 198)
-
-[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D3"]
-texture = ExtResource("1_aktf5")
-region_enabled = true
-region_rect = Rect2(336, 0, 80, 80)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D3"]
 shape = SubResource("CircleShape2D_og0pb")
 
 [node name="VerletObject" type="Node2D" parent="."]
