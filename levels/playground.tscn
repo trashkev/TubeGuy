@@ -1,0 +1,76 @@
+[gd_scene load_steps=6 format=3 uid="uid://d2npb50luppe1"]
+
+[ext_resource type="Texture2D" uid="uid://b41agfocex2pg" path="res://013117_SM_frog-tongue_main_free.jpg" id="1_53bfj"]
+[ext_resource type="Texture2D" uid="uid://b6f38qam3o82h" path="res://spritesheet_default.png" id="1_aktf5"]
+[ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dcfay"]
+size = Vector2(1120, 72)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_og0pb"]
+radius = 40.0
+
+[node name="Playground" type="Node2D"]
+
+[node name="013117SmFrog-tongueMainFree" type="Sprite2D" parent="."]
+position = Vector2(589, 379)
+texture = ExtResource("1_53bfj")
+
+[node name="VerletObject" type="Node2D" parent="."]
+script = ExtResource("2_l8ams")
+
+[node name="Platform" type="StaticBody2D" parent="." groups=["environment"]]
+position = Vector2(-7, -658)
+
+[node name="Sprite2D" type="Sprite2D" parent="Platform"]
+texture = ExtResource("1_aktf5")
+region_enabled = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform"]
+position = Vector2(576, 604)
+shape = SubResource("RectangleShape2D_dcfay")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="Platform"]
+offset_left = 16.0
+offset_top = 568.0
+offset_right = 1136.0
+offset_bottom = 640.0
+texture = ExtResource("1_aktf5")
+region_rect = Rect2(96, 0, 80, 80)
+patch_margin_left = 25
+patch_margin_top = 27
+patch_margin_right = 24
+patch_margin_bottom = 24
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." groups=["environment"]]
+position = Vector2(-93, 392)
+
+[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D"]
+texture = ExtResource("1_aktf5")
+region_enabled = true
+region_rect = Rect2(336, 0, 80, 80)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+shape = SubResource("CircleShape2D_og0pb")
+
+[node name="StaticBody2D2" type="StaticBody2D" parent="." groups=["environment"]]
+position = Vector2(-318, 366)
+
+[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D2"]
+texture = ExtResource("1_aktf5")
+region_enabled = true
+region_rect = Rect2(336, 0, 80, 80)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
+shape = SubResource("CircleShape2D_og0pb")
+
+[node name="StaticBody2D3" type="StaticBody2D" parent="." groups=["environment"]]
+position = Vector2(-124, 168)
+
+[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D3"]
+texture = ExtResource("1_aktf5")
+region_enabled = true
+region_rect = Rect2(336, 0, 80, 80)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D3"]
+shape = SubResource("CircleShape2D_og0pb")
