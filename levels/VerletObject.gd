@@ -6,8 +6,9 @@ var timeAccum = 0.0
 var stepTime = 0.01
 var maxStep = 0.1
 
-var startPos :Vector2 = Vector2(550,350)
-var count = 40
+var startPos :Vector2 = Vector2(550,0)
+var targetPos = startPos
+var count = 30
 var spacing = 15
 	
 func Distance(p0:Point,p1:Point):
@@ -135,7 +136,7 @@ func AdjustCollisions():
 			if body.is_in_group("environment"):
 				var collisionShape = body.shape_owner_get_shape(0,0)
 				if collisionShape is CircleShape2D:
-					print("circo")
+					print("sirko")
 					var dist = body.global_position.distance_to(pointPos)
 					
 					#early out if not colliding???
@@ -150,11 +151,36 @@ func AdjustCollisions():
 					#point.old_y = point.y + velocity.y
 				elif collisionShape is RectangleShape2D:
 					print("sqar")
+					var localPoint = body.to_local(Vector2(point.x,point.y))
+					
+					var half :Vector2 = collisionShape.get_size() * 0.5
+					var scalar :Vector2 = body.scale
+					
+					var dx = localPoint.x
+					var px = half.x - abs(dx)
+					if px <= 0:
+						continue
+					
+					var dy = localPoint.y
+					var py = half.y - abs(dy)
+					if py <= 0:
+						continue
+					
+					if px * scalar.x < py * scalar.y:
+						var sx = sign(dx)
+						localPoint.x = half.x * sx
+					else:
+						var sy = sign(dy)
+						localPoint.y = half.y * sy
+					
+					var hitPos = body.to_global(localPoint)
+					point.x = hitPos.x
+					point.y = hitPos.y
+
 
 	queue_redraw()
-
-func _ready():
 	
+func GenerateRope():
 	for i in count:
 		var point
 		if i == 0:
@@ -166,6 +192,11 @@ func _ready():
 		var stick
 		stick = Stick.new(points[i],points[i+1],Distance(points[i],points[i+1]))
 		sticks.append(stick)
+		
+func _ready():
+	#points.append(Point.new(startPos.x,startPos.y,0.5,false))
+	GenerateRope()
+	
 	#setup points to have collision shapes (circles)
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
@@ -180,9 +211,15 @@ func _ready():
 		add_child(area2d)
 
 func _physics_process(delta):
+	targetPos = lerp(targetPos,get_global_mouse_position(),5*delta)
 	timeAccum += delta
 	timeAccum = min(timeAccum,maxStep)
 	while(timeAccum >= stepTime):
+		if Input.get_action_strength("grab") > 0:
+			points[0].pinned = true
+			points[0].x = targetPos.x
+			points[0].y = targetPos.y
+
 		Simulate()
 		AdjustCollisions()
 		timeAccum -= stepTime;

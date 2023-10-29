@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3 uid="uid://0joi3mldqkq7"]
+
+[ext_resource type="Texture2D" uid="uid://b6f38qam3o82h" path="res://spritesheet_default.png" id="1_rv6rv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dcfay"]
+size = Vector2(1120, 72)
+
+[node name="Platform" type="StaticBody2D" groups=["environment"]]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, 1)
+texture = ExtResource("1_rv6rv")
+region_enabled = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_dcfay")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -560.0
+offset_top = -36.0
+offset_right = 560.0
+offset_bottom = 36.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_rv6rv")
+region_rect = Rect2(96, 0, 80, 80)
+patch_margin_left = 25
+patch_margin_top = 27
+patch_margin_right = 24
+patch_margin_bottom = 24
