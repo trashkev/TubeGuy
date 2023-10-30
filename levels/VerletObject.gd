@@ -1,18 +1,18 @@
 extends Node2D
 
 var pointColor :Color
-var collisionRadius :float = 20.0
+var collisionRadius :float = 15.0
 var timeAccum = 0.0
 var stepTime = 0.01
 var maxStep = 0.1
 
 var startPos :Vector2 = Vector2(660,200)
 var targetPos = startPos
-var count = 1
+var count = 20
 var spacing = 10
-var bounciness = .8
+var bounciness = .6
 var friction = 0.01
-var inflateForce :float = 400
+var inflateForce :float = 500
 var inflateSpeed :float = 2
 var deflateSpeed :float = 2
 var inflatePercentage :float = 0.0
@@ -20,11 +20,11 @@ var inflating :bool = false
 var time = 0.0
 var debugDrawPos = []
 var debugDrawCol = []
+
 func Distance(p0:Point,p1:Point):
 	var dx = p1.x - p0.x
 	var dy = p1.y - p0.y
 	return sqrt(dx*dx+dy*dy)
-
 
 class Point:
 	var x :float
@@ -34,7 +34,7 @@ class Point:
 	var mass :float
 	var pinned :bool
 	var color :Color
-	
+
 	var externalForce :Vector2
 	var area2d : Area2D
 	var collisionShape :CollisionShape2D
@@ -118,7 +118,7 @@ var sticks :Array[Stick] = [
 func Simulate():
 	#update all points
 	var externalForce :Vector2 = Vector2(0.0,0.0)
-	externalForce.y += 200 #gravity
+	externalForce.y += 300 #gravity
 	#externalForce.x += -1
 	
 	
@@ -163,13 +163,19 @@ func AdjustCollisions():
 					#early out if not colliding???
 					if dist - collisionShape.radius + collisionRadius < 0:
 						break
-					var dir = (pointPos - body.position).normalized()
-					var hitPos = body.global_position + dir * (collisionShape.radius + collisionRadius + 1)
+					var collisionNormal = (pointPos - body.position).normalized()
+					var hitPos = body.global_position + collisionNormal * (collisionShape.radius + collisionRadius + 1)
+					var edgePos = body.global_position + collisionNormal * (collisionShape.radius)
+					
+					var u = velocity.dot(collisionNormal)*collisionNormal
+					var w = velocity-u
+					var bounceVelocity = (1.0 - friction) * w - bounciness * u
+					
 					point.x = hitPos.x
 					point.y = hitPos.y
+					point.old_x = point.x - bounceVelocity.x
+					point.old_y = point.y - bounceVelocity.y
 					
-					#point.old_x = point.x + velocity.x
-					#point.old_y = point.y + velocity.y
 				elif collisionShape is RectangleShape2D:
 					var localPoint = body.to_local(Vector2(point.x,point.y))
 					
@@ -240,9 +246,19 @@ func GenerateRope():
 		sticks.append(stick)
 	
 func _ready():
-	points.append(Point.new(startPos.x,startPos.y,1,false))
+	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	#GenerateRope()
 	#setup points to have collision shapes (circles)
+	points.append(Point.new(startPos.x,startPos.y,1,false))
+	points.append(Point.new(startPos.x+150,startPos.y,1,false))
+	points.append(Point.new(startPos.x+150,startPos.y-150,1,false))
+	points.append(Point.new(startPos.x,startPos.y-150,1,false))
+	
+	sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
+	sticks.append(Stick.new(points[1],points[2],Distance(points[1],points[2])))
+	sticks.append(Stick.new(points[2],points[3],Distance(points[2],points[3])))
+	sticks.append(Stick.new(points[3],points[0],Distance(points[3],points[0])))
+	sticks.append(Stick.new(points[0],points[2],Distance(points[0],points[2])-16))
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
 		shape.radius = collisionRadius
@@ -280,7 +296,7 @@ func _draw():
 	var colorA = Color(0.93000000715256, 0.23203498125076, 0.1952999830246)
 	var colorB = Color(0.36000001430511, 0.05555998906493, 0.05039999634027)
 	for stick in sticks:
-		#draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),pointColor,collisionRadius*2)
+		draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),pointColor,collisionRadius*2)
 		pass
 	for i in points.size() as float:
 		var size = collisionRadius
@@ -305,10 +321,11 @@ func _input(event):
 		var velocity = Vector2(randf_range(-5.0,5.0),randf_range(-5.0,5.0))
 		debugDrawPos.clear()
 		debugDrawCol.clear()
-		points[0].x = get_local_mouse_position().x
-		points[0].y = get_local_mouse_position().y
-		points[0].old_x = points[0].x + velocity.x
-		points[0].old_y = points[0].y + velocity.y
+		for i in points.size():
+			#points[i].x = get_local_mouse_position().x
+			#points[i].y = get_local_mouse_position().y
+			points[i].old_x = points[0].x + velocity.x
+			points[i].old_y = points[0].y + velocity.y
 		#AdjustCollisions()
 		Simulate()
 		#AdjustCollisions()

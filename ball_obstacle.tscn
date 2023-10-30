@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://h0od5oy1b0fu"]
+
+[ext_resource type="Texture2D" uid="uid://b6f38qam3o82h" path="res://spritesheet_default.png" id="1_a0s0g"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_og0pb"]
+radius = 40.0
+
+[node name="BallObstacle" type="StaticBody2D" groups=["environment"]]
+position = Vector2(-219, 296)
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_a0s0g")
+region_enabled = true
+region_rect = Rect2(336, 0, 80, 80)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_og0pb")
