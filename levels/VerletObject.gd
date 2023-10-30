@@ -8,9 +8,10 @@ var maxStep = 0.1
 
 var startPos :Vector2 = Vector2(660,200)
 var targetPos = startPos
-var count = 30
+var count = 1
 var spacing = 10
-
+var bounciness = .8
+var friction = 0.01
 var inflateForce :float = 400
 var inflateSpeed :float = 2
 var deflateSpeed :float = 2
@@ -202,7 +203,7 @@ func AdjustCollisions():
 					
 					var u = velocity.dot(collisionNormal)*collisionNormal
 					var w = velocity-u
-					var bounceVelocity = w-u
+					var bounceVelocity = (1.0 - friction) * w - bounciness * u
 					#print(bounceVelocity)
 					
 					point.x = hitPos.x
@@ -239,8 +240,8 @@ func GenerateRope():
 		sticks.append(stick)
 	
 func _ready():
-	#points.append(Point.new(startPos.x,startPos.y,1,false))
-	GenerateRope()
+	points.append(Point.new(startPos.x,startPos.y,1,false))
+	#GenerateRope()
 	#setup points to have collision shapes (circles)
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
@@ -299,10 +300,18 @@ func _input(event):
 		
 	elif !Input.is_action_pressed("inflate"):
 		inflating = false
-	if Input.is_action_pressed("grab"):
+	if Input.is_action_just_pressed("grab"):
 		#points[0].pinned = true
-		points[0].x = targetPos.x
-		points[0].y = targetPos.y
+		var velocity = Vector2(randf_range(-5.0,5.0),randf_range(-5.0,5.0))
+		debugDrawPos.clear()
+		debugDrawCol.clear()
+		points[0].x = get_local_mouse_position().x
+		points[0].y = get_local_mouse_position().y
+		points[0].old_x = points[0].x + velocity.x
+		points[0].old_y = points[0].y + velocity.y
+		#AdjustCollisions()
+		Simulate()
+		#AdjustCollisions()
 	#else:
 		#points[0].pinned = false
 	
