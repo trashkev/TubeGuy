@@ -1,22 +1,24 @@
 extends Node2D
 
 var pointColor :Color
-var collisionRadius :float = 30.0
+var collisionRadius :float = 20.0
 var timeAccum = 0.0
-var stepTime = 0.005
+var stepTime = 0.01
 var maxStep = 0.1
 
-var startPos :Vector2 = Vector2(550,0)
+var startPos :Vector2 = Vector2(660,200)
 var targetPos = startPos
-var count = 50
+var count = 30
 var spacing = 10
 
-var inflateForce :float = 200
+var inflateForce :float = 400
 var inflateSpeed :float = 2
 var deflateSpeed :float = 2
 var inflatePercentage :float = 0.0
 var inflating :bool = false
 var time = 0.0
+var debugDrawPos = []
+var debugDrawCol = []
 func Distance(p0:Point,p1:Point):
 	var dx = p1.x - p0.x
 	var dy = p1.y - p0.y
@@ -45,20 +47,27 @@ class Point:
 		self.pinned = pinned
 		
 	func Update(stepTime):
-		if(self.pinned):return
-		var vel_x = (self.x - self.old_x)
-		var vel_y = (self.y - self.old_y)
+
+		if(!self.pinned):
+			var vel_x = (self.x - self.old_x)
+			var vel_y = (self.y - self.old_y)
+			
+			self.old_x = self.x
+			self.old_y = self.y
+			
+			var acc_x = externalForce.x / self.mass
+			var acc_y = externalForce.y / self.mass
+			#var acc_x = 0
+			#var acc_y = 0
+			#estimate new position using verlet integration
+			self.x += vel_x + acc_x * stepTime * stepTime
+			self.y += vel_y + acc_y * stepTime * stepTime
+			
+		else:
+			self.old_x = self.x
+			self.old_y = self.y
 		
-		self.old_x = self.x
-		self.old_y = self.y
-		
-		var acc_x = externalForce.x / self.mass;
-		var acc_y = externalForce.y / self.mass;
-		
-		#estimate new position using verlet integration
-		self.x += vel_x + acc_x * stepTime * stepTime;
-		self.y += vel_y + acc_y * stepTime * stepTime;
-		
+		#update Area2D position
 		self.area2d.position.x = self.x
 		self.area2d.position.y = self.y
 
@@ -108,7 +117,7 @@ var sticks :Array[Stick] = [
 func Simulate():
 	#update all points
 	var externalForce :Vector2 = Vector2(0.0,0.0)
-	externalForce.y += 100 #gravity
+	externalForce.y += 200 #gravity
 	#externalForce.x += -1
 	
 	
@@ -122,9 +131,9 @@ func Simulate():
 		#TODO: add gradual filling per point, then continue filling rest. (uhh use modulo? floor? idk)
 		var pointPercentage = i/float(points.size())
 		#print(pointPercentage)
-		if pointPercentage < inflatePercentage:
+		if pointPercentage < inflatePercentage * clamp(0.2+abs(sin(time*1.5)),0.0,1.0):
 			points[i].color = Color.RED
-			points[i].externalForce = externalForce - Vector2(0,inflateForce + 100* sin(time*5))
+			points[i].externalForce = externalForce - Vector2(0,inflateForce)
 		else:
 			points[i].color = Color.DARK_RED
 			points[i].externalForce = externalForce
@@ -143,7 +152,6 @@ func AdjustCollisions():
 		var pointPos :Vector2 = Vector2(point.x,point.y)
 		var velocity :Vector2 = Vector2(point.x - point.old_x,point.y - point.old_y)
 		var bodies = point.area2d.get_overlapping_bodies()
-		
 		for body in bodies:
 			if body.is_in_group("environment"):
 				var collisionShape = body.shape_owner_get_shape(0,0)
@@ -162,34 +170,59 @@ func AdjustCollisions():
 					#point.old_x = point.x + velocity.x
 					#point.old_y = point.y + velocity.y
 				elif collisionShape is RectangleShape2D:
-					#print("sqar")
 					var localPoint = body.to_local(Vector2(point.x,point.y))
 					
 					var half :Vector2 = collisionShape.get_size() * 0.5
+
 					var scalar :Vector2 = body.scale
 					
 					var dx = localPoint.x
 					var px = half.x - abs(dx)
-					if px <= 0:
-						continue
 					
 					var dy = localPoint.y
 					var py = half.y - abs(dy)
-					if py <= 0:
-						continue
-					
+						
+					var boxEdgePoint = Vector2(0,0)
 					if px * scalar.x < py * scalar.y:
 						var sx = sign(dx)
-						localPoint.x = half.x * sx
+						boxEdgePoint.x = half.x * sx
+						boxEdgePoint.y = dy
 					else:
 						var sy = sign(dy)
-						localPoint.y = half.y * sy
+						boxEdgePoint.x = dx
+						boxEdgePoint.y = half.y * sy
 					
-					var hitPos = body.to_global(localPoint)
+					var globalPoint = body.to_global(Vector2(localPoint.x,localPoint.y))
+					boxEdgePoint = body.to_global(boxEdgePoint)
+					var collisionNormal = (globalPoint - boxEdgePoint).normalized()
+					var hitPos = boxEdgePoint + (collisionRadius) * (collisionNormal)
+					#hitPos = body.to_global(hitPos)		
+					
+					
+					
+					var u = velocity.dot(collisionNormal)*collisionNormal
+					var w = velocity-u
+					var bounceVelocity = w-u
+					#print(bounceVelocity)
+					
 					point.x = hitPos.x
 					point.y = hitPos.y
-
-
+					point.old_x = point.x - bounceVelocity.x
+					point.old_y = point.y - bounceVelocity.y
+					
+					point.area2d.position.x = point.x
+					point.area2d.position.y = point.y
+					#point.area2d.monitoring = false
+					debugDrawPos.append(globalPoint)
+					debugDrawCol.append(Color.RED)
+					debugDrawPos.append(boxEdgePoint)
+					debugDrawCol.append(Color.GREEN)
+					debugDrawPos.append(hitPos)
+					debugDrawCol.append(Color.BLUE)
+					debugDrawPos.append(Vector2(point.old_x,point.old_y))
+					debugDrawCol.append(Color.BLUE_VIOLET)
+					
+					
 	queue_redraw()
 	
 func GenerateRope():
@@ -206,9 +239,8 @@ func GenerateRope():
 		sticks.append(stick)
 	
 func _ready():
-	#points.append(Point.new(startPos.x,startPos.y,0.5,false))
+	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	GenerateRope()
-	
 	#setup points to have collision shapes (circles)
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
@@ -223,10 +255,10 @@ func _ready():
 		add_child(area2d)
 
 func _physics_process(delta):
-	time+=delta
+	time+= delta
+	#print(sin(time*5))
 	targetPos = lerp(targetPos,get_global_mouse_position(),5*delta)
 	#inflate
-	print(inflateForce - 100* sin(time*5))
 	if inflating:
 		inflatePercentage += inflateSpeed * get_process_delta_time()
 		inflatePercentage = clamp(inflatePercentage,0.0,1.0)
@@ -237,14 +269,9 @@ func _physics_process(delta):
 	timeAccum += delta
 	timeAccum = min(timeAccum,maxStep)
 	while(timeAccum >= stepTime):
-		if Input.get_action_strength("grab") > 0:
-			points[0].pinned = true
-			points[0].x = targetPos.x
-			points[0].y = targetPos.y
-
+		AdjustCollisions()		
 		Simulate()
-		AdjustCollisions()
-		timeAccum -= stepTime;
+		timeAccum = 0;
 	pass
 	
 	
@@ -254,19 +281,30 @@ func _draw():
 	for stick in sticks:
 		#draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),pointColor,collisionRadius*2)
 		pass
-	for i in count as float:
+	for i in points.size() as float:
+		var size = collisionRadius
+		if i > count-1:
+			size = 15
 		var colorPercent :float
 		colorPercent = i/count
 		#print(colorPercent)
-		draw_circle(Vector2(points[i].x,points[i].y),collisionRadius,points[i].color * lerp(colorA,colorB,1-colorPercent))
+		draw_circle(Vector2(points[i].x,points[i].y),size,points[i].color * lerp(colorA,colorB,1-colorPercent))
 	
+	#debug draw
+	#for i in debugDrawPos.size():
+		#draw_circle(debugDrawPos[i],5,debugDrawCol[i])
 func _input(event):
 	if Input.is_action_pressed("inflate"):
 		inflating = true
 		
 	elif !Input.is_action_pressed("inflate"):
 		inflating = false
-	
+	if Input.is_action_pressed("grab"):
+		#points[0].pinned = true
+		points[0].x = targetPos.x
+		points[0].y = targetPos.y
+	#else:
+		#points[0].pinned = false
 	
 	
 	

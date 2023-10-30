@@ -12,9 +12,6 @@ position = Vector2(0, 1)
 texture = ExtResource("1_rv6rv")
 region_enabled = true
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_dcfay")
-
 [node name="NinePatchRect" type="NinePatchRect" parent="."]
 anchors_preset = 8
 anchor_left = 0.5
@@ -33,3 +30,6 @@ patch_margin_left = 25
 patch_margin_top = 27
 patch_margin_right = 24
 patch_margin_bottom = 24
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_dcfay")

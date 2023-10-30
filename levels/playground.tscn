@@ -16,10 +16,26 @@ position = Vector2(589, 379)
 texture = ExtResource("1_53bfj")
 
 [node name="Platform" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(556, 631)
+position = Vector2(503, 608)
+
+[node name="Platform5" parent="." instance=ExtResource("3_meopj")]
+position = Vector2(261, 247)
+rotation = -0.799244
+
+[node name="Platform2" parent="." instance=ExtResource("3_meopj")]
+position = Vector2(846, 342)
+rotation = 1.57079
+
+[node name="Platform3" parent="." instance=ExtResource("3_meopj")]
+position = Vector2(14, 349)
+rotation = 1.57079
+
+[node name="Platform4" parent="." instance=ExtResource("3_meopj")]
+position = Vector2(544, 3)
+rotation = 3.14159
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." groups=["environment"]]
-position = Vector2(368, 342)
+position = Vector2(-219, 296)
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D"]
 texture = ExtResource("1_aktf5")
@@ -30,7 +46,7 @@ region_rect = Rect2(336, 0, 80, 80)
 shape = SubResource("CircleShape2D_og0pb")
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="." groups=["environment"]]
-position = Vector2(207, 478)
+position = Vector2(-381, 432)
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D2"]
 texture = ExtResource("1_aktf5")
