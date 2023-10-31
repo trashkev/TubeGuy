@@ -7,18 +7,18 @@ var stepTime = 0.01
 var maxStep = 0.1
 var iterations = 15
 
-var startPos :Vector2 = Vector2(660,622)
+var startPos :Vector2 = Vector2(660,650)
 var targetPos = startPos
 
 var count = 1
 var spacing = 10
 
-var bounciness = .6
+var bounciness = .3
 var friction = 0.01
 
 var inflateForce :float = 500
-var inflateSpeed :float = 2
-var deflateSpeed :float = 2
+var inflateSpeed :float = 0.2
+var deflateSpeed :float = 0.5
 var inflatePercentage :float = 0.0
 var inflating :bool = false
 
@@ -33,6 +33,9 @@ func Distance(p0:Point,p1:Point):
 	var dy = p1.y - p0.y
 	return sqrt(dx*dx+dy*dy)
 
+func SmoothStep(edge0,edge1,x):
+	x = clamp((x-edge0)/ (edge1-edge0),0.0,1.0)
+	return x * x * (3.0  - 2.0 * x)
 class Point:
 	var x :float
 	var y :float
@@ -41,6 +44,7 @@ class Point:
 	var mass :float
 	var pinned :bool
 	var color :Color
+	var gravity :float
 
 	var externalForce :Vector2
 	var area2d : Area2D
@@ -65,6 +69,7 @@ class Point:
 			
 			var acc_x = externalForce.x / self.mass
 			var acc_y = externalForce.y / self.mass
+			acc_y += gravity
 			#var acc_x = 0
 			#var acc_y = 0
 			#estimate new position using verlet integration
@@ -129,13 +134,13 @@ var sticks :Array[Stick] = [
 func Simulate():
 	#update all points
 	var externalForce :Vector2 = Vector2(0.0,0.0)
-	externalForce.y += 300 #gravity
+	#externalForce.y += 300 #gravity NO BAD
 	#externalForce.x += -1
 	
 	if Input.is_action_pressed("inflate_left"):
-		externalForce.x -= 200
+		externalForce.x -= 50
 	if Input.is_action_pressed("inflate_right"):
-		externalForce.x += 200
+		externalForce.x += 50
 		
 	for i in points.size():
 		#TODO: add gradual filling per point, then continue filling rest. (uhh use modulo? floor? idk)
@@ -151,15 +156,21 @@ func Simulate():
 	
 	#update all sticks
 	
+	#TODO:
+	#calculate inflatedness of every point, apply upward force to point accordingly
+	#for every stick, instead of calculating inflatedness of stick, average inflatedness of it's connected points,
+	#apply stiffness accordingly
+	
 	for i in sticks.size():
 		if sticks[i].inflatable:
-			var clampedInflate :float = clamp(inflatePercentage,0.18,1.0)
-			if ((i-1)/4.0) as float / (7) > clampedInflate:
-				sticks[i].stiffness = 0.05
-			else:
-				sticks[i].stiffness = .8
+			var clampedInflate :float = clamp(inflatePercentage,0.0,1.0)
+			var lengthPercent = clamp((float(i)/sticks.size()),0.0,1.0)
+			print(lengthPercent)
+			var softness = 0.1
+			sticks[i].stiffness = SmoothStep(0.0,softness,clampedInflate * (1-lengthPercent + softness))
+			sticks[i].stiffness = clamp(sticks[i].stiffness,0.05,1.0)
 		else:
-			sticks[i].stiffness = 1.0
+			sticks[i].stiffness = 0.5
 		sticks[i].Update()
 	queue_redraw()
 
@@ -284,17 +295,18 @@ func GenerateRope():
 		sticks.append(stick)
 
 func GenerateGuy():
-	var sections = 6
+	var sections = 12
 	var distance = 50
+	var pointMass = 0.01
 	#first section
-	points.append(Point.new(startPos.x,startPos.y,1,true))
-	points.append(Point.new(startPos.x+distance,startPos.y,1,true))
-	points.append(Point.new(startPos.x,startPos.y-distance,1,false))
-	points.append(Point.new(startPos.x+distance,startPos.y-distance,1,false))
+	points.append(Point.new(startPos.x,startPos.y,pointMass,true))
+	points.append(Point.new(startPos.x+distance,startPos.y,pointMass,true))
+	points.append(Point.new(startPos.x,startPos.y-distance,pointMass,false))
+	points.append(Point.new(startPos.x+distance,startPos.y-distance,pointMass,false))
 	
 	for i in sections-1:
-		points.append(Point.new(startPos.x,startPos.y-distance*(i+1)-distance,1,false))
-		points.append(Point.new(startPos.x+distance,startPos.y-distance*(i+1)-distance,1,false))
+		points.append(Point.new(startPos.x,startPos.y-distance*(i+1)-distance,pointMass,false))
+		points.append(Point.new(startPos.x+distance,startPos.y-distance*(i+1)-distance,pointMass,false))
 	for i in sections:
 		if(i==0):
 			#bottom _
@@ -306,15 +318,15 @@ func GenerateGuy():
 		#top _
 		sticks.append(Stick.new(points[3+i*2],points[2+i*2],Distance(points[3+i*2],points[2+i*2]),1.0,false))
 		#X sticks
-		sticks.append(Stick.new(points[0+i*2],points[3+i*2],Distance(points[0+i*2],points[3+i*2]),1.0,true))
-		sticks.append(Stick.new(points[1+i*2],points[2+i*2],Distance(points[1+i*2],points[2+i*2]),1.0,true))
+		sticks.append(Stick.new(points[0+i*2],points[3+i*2],Distance(points[0+i*2],points[3+i*2]),1.0,false))
+		sticks.append(Stick.new(points[1+i*2],points[2+i*2],Distance(points[1+i*2],points[2+i*2]),1.0,false))
 	
 func _ready():
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	#GenerateRope()
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	GenerateGuy()
-
+	
 	#sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
 	
 	for point in points:
@@ -328,6 +340,8 @@ func _ready():
 		area2d.add_child(collision)
 		point.area2d = area2d
 		add_child(area2d)
+		
+		point.gravity = 450
 
 func _physics_process(delta):
 	time+= delta
@@ -343,10 +357,10 @@ func _physics_process(delta):
 	
 	if(Input.is_action_just_pressed("place")):
 		PlacePoint(false)
-		print("Placed point at ",points[0].x, ", ",points[0].y)
+		#print("Placed point at ",points[0].x, ", ",points[0].y)
 	if(Input.is_action_just_pressed("shove")):
 		PlacePoint(true)
-		print("Placed point at ",points[0].x, ", ",points[0].y)
+		#print("Placed point at ",points[0].x, ", ",points[0].y)
 		
 	
 	timeAccum += delta
@@ -354,9 +368,9 @@ func _physics_process(delta):
 	while(timeAccum >= stepTime):
 		
 		AdjustCollisions()
-		print("adjust collision ", points[0].x, ", ",points[0].y)
+		#print("adjust collision ", points[0].x, ", ",points[0].y)
 		Simulate()
-		print("simulate ", points[0].x, ", ",points[0].y)
+		#print("simulate ", points[0].x, ", ",points[0].y)
 		timeAccum = 0;
 	
 	
