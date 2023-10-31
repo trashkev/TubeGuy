@@ -87,7 +87,7 @@ class Stick:
 		var dist = sqrt(dx*dx+dy*dy)
 		var diff = self.length - dist
 		var percent = (diff / dist) / 2
-		
+		percent *= 0.001
 		var offset_x = dx * percent
 		var offset_y = dy * percent
 		
@@ -258,7 +258,8 @@ func _ready():
 	sticks.append(Stick.new(points[1],points[2],Distance(points[1],points[2])))
 	sticks.append(Stick.new(points[2],points[3],Distance(points[2],points[3])))
 	sticks.append(Stick.new(points[3],points[0],Distance(points[3],points[0])))
-	sticks.append(Stick.new(points[0],points[2],Distance(points[0],points[2])-16))
+	sticks.append(Stick.new(points[0],points[2],Distance(points[0],points[2])))
+	sticks.append(Stick.new(points[1],points[3],Distance(points[1],points[3])))
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
 		shape.radius = collisionRadius
