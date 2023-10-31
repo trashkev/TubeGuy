@@ -1,14 +1,15 @@
 extends Node2D
 
 var pointColor :Color
-var collisionRadius :float = 15.0
+var collisionRadius :float = 16.0
 var timeAccum = 0.0
 var stepTime = 0.01
 var maxStep = 0.1
+var iterations = 5
 
 var startPos :Vector2 = Vector2(660,200)
 var targetPos = startPos
-var count = 20
+var count = 1
 var spacing = 10
 var bounciness = .6
 var friction = 0.01
@@ -18,6 +19,8 @@ var deflateSpeed :float = 2
 var inflatePercentage :float = 0.0
 var inflating :bool = false
 var time = 0.0
+
+var drawDebugDots :bool = false
 var debugDrawPos = []
 var debugDrawCol = []
 
@@ -150,32 +153,46 @@ func Simulate():
 func AdjustCollisions():
 	#collisions
 	for point in points:
+		
+		point.area2d.position.x = point.x
+		point.area2d.position.y = point.y
+		
 		var pointPos :Vector2 = Vector2(point.x,point.y)
 		var velocity :Vector2 = Vector2(point.x - point.old_x,point.y - point.old_y)
 		var bodies = point.area2d.get_overlapping_bodies()
+		
 		for body in bodies:
 			if body.is_in_group("environment"):
 				var collisionShape = body.shape_owner_get_shape(0,0)
 				if collisionShape is CircleShape2D:
-					#print("sirko")
 					var dist = body.global_position.distance_to(pointPos)
+					var scalar :Vector2 = body.scale
 					
-					#early out if not colliding???
-					if dist - collisionShape.radius + collisionRadius < 0:
-						break
 					var collisionNormal = (pointPos - body.position).normalized()
-					var hitPos = body.global_position + collisionNormal * (collisionShape.radius + collisionRadius + 1)
-					var edgePos = body.global_position + collisionNormal * (collisionShape.radius)
+					var hitPos = body.global_position + collisionNormal * (collisionShape.radius * scalar.x + collisionRadius)
+					var edgePos = body.global_position + collisionNormal * (collisionShape.radius * scalar.x)
 					
 					var u = velocity.dot(collisionNormal)*collisionNormal
 					var w = velocity-u
 					var bounceVelocity = (1.0 - friction) * w - bounciness * u
+					
+					if drawDebugDots:
+						debugDrawPos.append(pointPos)
+						debugDrawCol.append(Color.RED)
 					
 					point.x = hitPos.x
 					point.y = hitPos.y
 					point.old_x = point.x - bounceVelocity.x
 					point.old_y = point.y - bounceVelocity.y
 					
+					if drawDebugDots:
+						debugDrawPos.append(edgePos)
+						debugDrawCol.append(Color.GREEN)
+						debugDrawPos.append(hitPos)
+						debugDrawCol.append(Color.BLUE)
+						debugDrawPos.append(Vector2(point.old_x,point.old_y))
+						debugDrawCol.append(Color.BLUE_VIOLET)
+						
 				elif collisionShape is RectangleShape2D:
 					var localPoint = body.to_local(Vector2(point.x,point.y))
 					
@@ -188,6 +205,9 @@ func AdjustCollisions():
 					
 					var dy = localPoint.y
 					var py = half.y - abs(dy)
+					
+					if abs(dx) > half.x+collisionRadius or abs(dy) > half.y+collisionRadius:
+						return
 						
 					var boxEdgePoint = Vector2(0,0)
 					if px * scalar.x < py * scalar.y:
@@ -199,39 +219,60 @@ func AdjustCollisions():
 						boxEdgePoint.x = dx
 						boxEdgePoint.y = half.y * sy
 					
+						
 					var globalPoint = body.to_global(Vector2(localPoint.x,localPoint.y))
+					
 					boxEdgePoint = body.to_global(boxEdgePoint)
+					
 					var collisionNormal = (globalPoint - boxEdgePoint).normalized()
+					#if the point is inside the box, flip the collision normal
+					if abs(dx) < half.x and abs(dy) < half.y:
+						print("INSIDE")
+						print(abs(dx)," ",half.x," ", abs(dy)," ",half.y)
+						collisionNormal = -collisionNormal
+					
 					var hitPos = boxEdgePoint + (collisionRadius) * (collisionNormal)
-					#hitPos = body.to_global(hitPos)		
-					
-					
 					
 					var u = velocity.dot(collisionNormal)*collisionNormal
 					var w = velocity-u
 					var bounceVelocity = (1.0 - friction) * w - bounciness * u
-					#print(bounceVelocity)
 					
 					point.x = hitPos.x
 					point.y = hitPos.y
-					point.old_x = point.x - bounceVelocity.x
-					point.old_y = point.y - bounceVelocity.y
+					point.old_x = hitPos.x - bounceVelocity.x
+					point.old_y = hitPos.y - bounceVelocity.y
 					
+					#point.area2d.monitoring = false
 					point.area2d.position.x = point.x
 					point.area2d.position.y = point.y
-					#point.area2d.monitoring = false
-					debugDrawPos.append(globalPoint)
-					debugDrawCol.append(Color.RED)
-					debugDrawPos.append(boxEdgePoint)
-					debugDrawCol.append(Color.GREEN)
-					debugDrawPos.append(hitPos)
-					debugDrawCol.append(Color.BLUE)
-					debugDrawPos.append(Vector2(point.old_x,point.old_y))
-					debugDrawCol.append(Color.BLUE_VIOLET)
+					
+					if drawDebugDots:
+						debugDrawPos.append(globalPoint)
+						debugDrawCol.append(Color.RED)
+						debugDrawPos.append(boxEdgePoint)
+						debugDrawCol.append(Color.GREEN)
+						debugDrawPos.append(hitPos)
+						debugDrawCol.append(Color.BLUE)
+						debugDrawPos.append(Vector2(point.old_x,point.old_y))
+						debugDrawCol.append(Color.BLUE_VIOLET)
 					
 					
 	queue_redraw()
 	
+func PlacePoint(shove :bool):
+	var velocity = Vector2(randf_range(-50.0,50.0),randf_range(-50.0,50.0))
+	debugDrawPos.clear()
+	debugDrawCol.clear()
+	for i in points.size():
+		points[i].x = get_local_mouse_position().x
+		points[i].y = get_local_mouse_position().y
+		points[i].old_x = get_local_mouse_position().x
+		points[i].old_y = get_local_mouse_position().y
+		points[i].area2d.position.x = points[i].x
+		points[i].area2d.position.y = points[i].y
+		if shove:
+			points[i].old_x = points[0].x + velocity.x
+			points[i].old_y = points[0].y + velocity.y
 func GenerateRope():
 	for i in count:
 		var point
@@ -246,20 +287,20 @@ func GenerateRope():
 		sticks.append(stick)
 	
 func _ready():
-	#points.append(Point.new(startPos.x,startPos.y,1,false))
+	points.append(Point.new(startPos.x,startPos.y,1,false))
 	#GenerateRope()
 	#setup points to have collision shapes (circles)
-	points.append(Point.new(startPos.x,startPos.y,1,false))
-	points.append(Point.new(startPos.x+150,startPos.y,1,false))
-	points.append(Point.new(startPos.x+150,startPos.y-150,1,false))
-	points.append(Point.new(startPos.x,startPos.y-150,1,false))
-	
-	sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
-	sticks.append(Stick.new(points[1],points[2],Distance(points[1],points[2])))
-	sticks.append(Stick.new(points[2],points[3],Distance(points[2],points[3])))
-	sticks.append(Stick.new(points[3],points[0],Distance(points[3],points[0])))
-	sticks.append(Stick.new(points[0],points[2],Distance(points[0],points[2])))
-	sticks.append(Stick.new(points[1],points[3],Distance(points[1],points[3])))
+#	points.append(Point.new(startPos.x,startPos.y,1,false))
+#	points.append(Point.new(startPos.x+150,startPos.y,1,false))
+#	points.append(Point.new(startPos.x+150,startPos.y-150,1,false))
+#	points.append(Point.new(startPos.x,startPos.y-150,1,false))
+#
+#	sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
+#	sticks.append(Stick.new(points[1],points[2],Distance(points[1],points[2])))
+#	sticks.append(Stick.new(points[2],points[3],Distance(points[2],points[3])))
+#	sticks.append(Stick.new(points[3],points[0],Distance(points[3],points[0])))
+#	sticks.append(Stick.new(points[0],points[2],Distance(points[0],points[2])))
+#	sticks.append(Stick.new(points[1],points[3],Distance(points[1],points[3])))
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
 		shape.radius = collisionRadius
@@ -284,13 +325,23 @@ func _physics_process(delta):
 		inflatePercentage -= deflateSpeed * get_process_delta_time()
 		inflatePercentage = clamp(inflatePercentage,0.0,1.0)
 	
+	if(Input.is_action_just_pressed("place")):
+		PlacePoint(false)
+		print("Placed point at ",points[0].x, ", ",points[0].y)
+	if(Input.is_action_just_pressed("shove")):
+		PlacePoint(true)
+		print("Placed point at ",points[0].x, ", ",points[0].y)
+		
+	
 	timeAccum += delta
 	timeAccum = min(timeAccum,maxStep)
 	while(timeAccum >= stepTime):
-		AdjustCollisions()		
+		
+		AdjustCollisions()
+		print("adjust collision ", points[0].x, ", ",points[0].y)
 		Simulate()
+		print("simulate ", points[0].x, ", ",points[0].y)
 		timeAccum = 0;
-	pass
 	
 	
 func _draw():
@@ -308,27 +359,20 @@ func _draw():
 		#print(colorPercent)
 		draw_circle(Vector2(points[i].x,points[i].y),size,points[i].color * lerp(colorA,colorB,1-colorPercent))
 	
-	#debug draw
-	#for i in debugDrawPos.size():
-		#draw_circle(debugDrawPos[i],5,debugDrawCol[i])
+	for i in debugDrawPos.size():
+		draw_circle(debugDrawPos[i],5,debugDrawCol[i])
+		
 func _input(event):
 	if Input.is_action_pressed("inflate"):
 		inflating = true
 		
 	elif !Input.is_action_pressed("inflate"):
 		inflating = false
-	if Input.is_action_just_pressed("grab"):
+	#if Input.is_action_just_pressed("grab"):
 		#points[0].pinned = true
-		var velocity = Vector2(randf_range(-5.0,5.0),randf_range(-5.0,5.0))
-		debugDrawPos.clear()
-		debugDrawCol.clear()
-		for i in points.size():
-			#points[i].x = get_local_mouse_position().x
-			#points[i].y = get_local_mouse_position().y
-			points[i].old_x = points[0].x + velocity.x
-			points[i].old_y = points[0].y + velocity.y
+		
 		#AdjustCollisions()
-		Simulate()
+		#Simulate()
 		#AdjustCollisions()
 	#else:
 		#points[0].pinned = false
