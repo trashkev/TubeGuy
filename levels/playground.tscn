@@ -1,8 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://d2npb50luppe1"]
+[gd_scene load_steps=4 format=3 uid="uid://d2npb50luppe1"]
 
 [ext_resource type="Texture2D" uid="uid://b41agfocex2pg" path="res://013117_SM_frog-tongue_main_free.jpg" id="1_53bfj"]
 [ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
-[ext_resource type="PackedScene" uid="uid://h0od5oy1b0fu" path="res://ball_obstacle.tscn" id="3_hnimq"]
 [ext_resource type="PackedScene" uid="uid://0joi3mldqkq7" path="res://platform.tscn" id="3_meopj"]
 
 [node name="Playground" type="Node2D"]
@@ -13,58 +12,24 @@ position = Vector2(589, 379)
 texture = ExtResource("1_53bfj")
 
 [node name="Platform" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(565, 612)
-
-[node name="Platform5" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(59, 188)
-rotation = -0.799244
-
-[node name="Platform6" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(1020, 462)
-rotation = -0.799244
-
-[node name="Platform7" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(191, 518)
-rotation = 0.524603
-scale = Vector2(1, 4.22933)
-
-[node name="Platform8" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(863, 109)
-rotation = 0.271415
+position = Vector2(554, 683)
+scale = Vector2(1.2, 1)
 
 [node name="Platform2" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(1128, 355)
+position = Vector2(1180, 371)
 rotation = 1.57079
 
 [node name="Platform3" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(14, 349)
+position = Vector2(-23, 363)
 rotation = 1.57079
 
 [node name="Platform4" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(569, -6)
+position = Vector2(582, -32)
 rotation = 3.14159
+scale = Vector2(1.24, 1)
 
-[node name="BallObstacle" parent="." instance=ExtResource("3_hnimq")]
-position = Vector2(-189, 197)
-
-[node name="BallObstacle2" parent="." instance=ExtResource("3_hnimq")]
-position = Vector2(-363, 212)
-
-[node name="BallObstacle3" parent="." instance=ExtResource("3_hnimq")]
-position = Vector2(777, 432)
-scale = Vector2(0.558286, 0.558286)
-
-[node name="BallObstacle4" parent="." instance=ExtResource("3_hnimq")]
-position = Vector2(757, 372)
-scale = Vector2(1.23452, 1.23452)
-
-[node name="BallObstacle5" parent="." instance=ExtResource("3_hnimq")]
-position = Vector2(678, 390)
-scale = Vector2(0.906713, 0.906713)
-
-[node name="BallObstacle6" parent="." instance=ExtResource("3_hnimq")]
-position = Vector2(626, 368)
-scale = Vector2(0.906713, 0.906713)
+[node name="Node2D" type="Node2D" parent="."]
+position = Vector2(590, 622)
 
 [node name="VerletObject" type="Node2D" parent="."]
 script = ExtResource("2_l8ams")
