@@ -6,7 +6,6 @@
 radius = 40.0
 
 [node name="BallObstacle" type="StaticBody2D" groups=["environment"]]
-position = Vector2(-219, 296)
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_a0s0g")
