@@ -381,6 +381,19 @@ func _physics_process(delta):
 		#print("adjust collision ", points[0].x, ", ",points[0].y)
 		#print("simulate ", points[0].x, ", ",points[0].y)
 		timeAccum = 0;
+
+#TODO: generate mesh2D using SurfaceTool
+#create meshInstance and set created mesh
+#create material using verlet mesh renderer, and pass vertex indicies to the shader using SurfaceTool.SetCustom use CUSTOMX
+#write a shader that takes in
+#	a vector 2 array of the point positions in the same order as their coresponding vertex
+#	calculates the vertex position of each vert relative to the vertex indicies provided
+#	calculates UVs for the mesh
+#	EXTRA:
+#		shader takes in a float parameter for inflating amount, which it uses to animate a noise wobble effect on the streamers on head
+
+func GenerateMesh():
+	pass
 	
 func _draw():
 	var colorA = Color(0.93000000715256, 0.23203498125076, 0.1952999830246)
