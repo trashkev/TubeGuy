@@ -16,7 +16,7 @@ var spacing = 10
 var bounciness = .1
 var friction = 0.01
 
-var inflateForce :float = 100
+var inflateForce :float = 10000
 var inflateSpeed :float = 1.0
 var deflateSpeed :float = 1.0
 var inflatePercentage :float = 0.0
@@ -113,12 +113,12 @@ class Stick:
 		var offset_y = dy * percent
 		
 		if !self.p0.pinned:
-			self.p0.x -= offset_x#/p0.mass
-			self.p0.y -= offset_y#/p0.mass
+			self.p0.x -= offset_x/p0.mass
+			self.p0.y -= offset_y/p0.mass
 		
 		if !self.p1.pinned:
-			self.p1.x += offset_x#/p1.mass
-			self.p1.y += offset_y#/p1.mass
+			self.p1.x += offset_x/p1.mass
+			self.p1.y += offset_y/p1.mass
 
 var points :Array[Point] = []
 
@@ -129,9 +129,9 @@ func Simulate():
 	var externalForce :Vector2 = Vector2(0.0,0.0)
 	
 	if Input.is_action_pressed("inflate_left"):
-		externalForce.x -= 25
+		externalForce.x -= 2500
 	if Input.is_action_pressed("inflate_right"):
-		externalForce.x += 25
+		externalForce.x += 2500
 	
 	
 	
@@ -147,7 +147,10 @@ func Simulate():
 		points[i].inflatedness = 1-SmoothStep(inflatePercentage, inflatePercentage+softness,lengthPercent+softness)
 		#points[i].inflatedness = clamp(points[i].inflatedness,0.0,1.0)
 		var inflate = Vector2(0.0,points[i].inflatedness * -inflateForce)
-		points[i].externalForce = externalForce + inflate
+		#todo: add bool for affected by inflate to point
+		#TODO: consider adding opposite and equal reaction inflate force to the base, so it's as if the inflate force comes from the base
+		if i != 0 and i != 1:
+			points[i].externalForce = externalForce + inflate
 		points[i].Update(stepTime)
 	
 	#apply stick stiffness based on average connected point inflatedness
@@ -287,7 +290,7 @@ func GenerateRope():
 @export var sections = 8
 @export var verticalDistance = 50
 @export var horizontalDistance = 50
-@export var pointMass = 0.01
+@export var pointMass = 1.0
 
 @export var sideStiffness = 0
 @export var sideClampLength = true
@@ -299,8 +302,8 @@ func GenerateRope():
 @export var topClampLength = true
 func GenerateGuy():
 	#first section
-	points.append(Point.new(startPos.x,startPos.y,5000,false))
-	points.append(Point.new(startPos.x+horizontalDistance,startPos.y,5000,false))
+	points.append(Point.new(startPos.x,startPos.y,500,false))
+	points.append(Point.new(startPos.x+horizontalDistance,startPos.y,500,false))
 	points.append(Point.new(startPos.x,startPos.y-verticalDistance,pointMass,false))
 	points.append(Point.new(startPos.x+horizontalDistance,startPos.y-verticalDistance,pointMass,false))
 	
@@ -310,7 +313,7 @@ func GenerateGuy():
 	for i in sections:
 		if(i==0):
 			#bottom _
-			sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1]),1.0,false,false))
+			sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1]),1.0,false,true))
 		#sides | |
 		sticks.append(Stick.new(points[1+i*2],points[3+i*2],Distance(points[1+i*2],points[3+i*2]),sideStiffness,true,sideClampLength))
 		sticks.append(Stick.new(points[2+i*2],points[0+i*2],Distance(points[2+i*2],points[0+i*2]),sideStiffness,true,sideClampLength))
