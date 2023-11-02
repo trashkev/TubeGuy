@@ -25,6 +25,7 @@ var inflating :bool = false
 var time = 0.0
 
 var drawDebugDots :bool = false
+@export var drawPointsAndSticks :bool = false
 var debugDrawPos = []
 var debugDrawCol = []
 
@@ -230,8 +231,8 @@ func AdjustCollisions():
 						var collisionNormal = (globalPoint - boxEdgePoint).normalized()
 						#if the point is inside the box, flip the collision normal
 						if abs(dx) < half.x and abs(dy) < half.y:
-							print("INSIDE")
-							print(abs(dx)," ",half.x," ", abs(dy)," ",half.y)
+							#print("INSIDE")
+							#print(abs(dx)," ",half.x," ", abs(dy)," ",half.y)
 							collisionNormal = -collisionNormal
 						
 						hitPos = boxEdgePoint + (collisionRadius) * (collisionNormal)
@@ -349,6 +350,7 @@ func _ready():
 	#sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
 	
 func _physics_process(delta):
+	
 	time+= delta
 	#print(sin(time*5))
 	targetPos = lerp(targetPos,get_global_mouse_position(),5*delta)
@@ -392,36 +394,64 @@ func _physics_process(delta):
 #	EXTRA:
 #		shader takes in a float parameter for inflating amount, which it uses to animate a noise wobble effect on the streamers on head
 
+@export var mat :ShaderMaterial
+@export var texture: Texture2D
+var mesh :Mesh
 func GenerateMesh():
-	var mesh = ArrayMesh.new()
+	mesh = ArrayMesh.new()
+	
 	var surface_array = []
 	surface_array.resize(Mesh.ARRAY_MAX)
+	
 	var verts = PackedVector3Array()
-	for i in points.size():
-		verts.append(Vector3(points[i].x,points[i].y,0))
+	#print(points.size())
+	for i in (points.size()):
+		verts.append(Vector3(0,0,0))
+	
 	var indicies = PackedInt32Array()
-	for i in sections*2:
-		indicies.append(i*3)
-		indicies.append(i*3+1)
-		indicies.append(i*3+2)
-		indicies.append(i*3+1)
-		indicies.append(i*3+2)
-		indicies.append(i*3+3)
+	for i in sections:
+		indicies.append(i*2+1)
+		indicies.append(i*2)
+		indicies.append(i*2+2)
+		
+		indicies.append(i*2+1)
+		indicies.append(i*2+2)
+		indicies.append(i*2+3)
+	
+	surface_array[Mesh.ARRAY_VERTEX] = verts
+	surface_array[Mesh.ARRAY_INDEX] = indicies
+	
+	var pointIndicies :PackedVector2Array = []
+	for i in points.size():
+		pointIndicies.append(Vector2(i,0))
+		print(pointIndicies[i])
+		#print(Vector2(points[i].x,points[i].y))
+	surface_array[Mesh.ARRAY_TEX_UV] = pointIndicies
+	
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,surface_array)
+	
 	var meshInstance2d = MeshInstance2D.new()
 	meshInstance2d.mesh = mesh
-	var mat = CanvasItemMaterial.new()
-	meshInstance2d.material = mat
-	add_child(meshInstance2d)
 	
-func _draw():
-	var colorA = Color(0.93000000715256, 0.23203498125076, 0.1952999830246)
-	var colorB = Color(0.36000001430511, 0.05555998906493, 0.05039999634027)
+	meshInstance2d.material = mat
+	meshInstance2d.texture = texture
+	meshInstance2d.z_index = -1
+	#TODO: get rid or use existing meshInstance2Ds
+	add_child(meshInstance2d)
+
+func UpdateMesh():
+	var pointPos = [128]
+	for i in points.size():
+		pointPos.append(Vector2(points[i].x,points[i].y))
+		mat.set_shader_parameter("pointPos",pointPos)
+		mat.set_shader_parameter("pointCount",points.size())
+
+func DrawPointsAndSticks():
 	for stick in sticks:
 		var col :Color
 		col = lerp(Color.RED,Color.GREEN,stick.stiffness)
 		draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),col,collisionRadius*0.5)
-		
+	
 	for i in points.size() as float:
 		var size = collisionRadius
 		if i > points.size()-1:
@@ -432,6 +462,10 @@ func _draw():
 	
 	for i in debugDrawPos.size():
 		draw_circle(debugDrawPos[i],5,debugDrawCol[i])
+func _draw():
+	UpdateMesh()
+	if(drawPointsAndSticks):
+		DrawPointsAndSticks()
 
 func _input(event):
 	if Input.is_action_pressed("inflate"):
