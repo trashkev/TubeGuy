@@ -345,7 +345,7 @@ func _ready():
 	#GenerateRope()
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	GenerateGuy()
-	
+	GenerateMesh()
 	#sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
 	
 func _physics_process(delta):
@@ -393,7 +393,26 @@ func _physics_process(delta):
 #		shader takes in a float parameter for inflating amount, which it uses to animate a noise wobble effect on the streamers on head
 
 func GenerateMesh():
-	pass
+	var mesh = ArrayMesh.new()
+	var surface_array = []
+	surface_array.resize(Mesh.ARRAY_MAX)
+	var verts = PackedVector3Array()
+	for i in points.size():
+		verts.append(Vector3(points[i].x,points[i].y,0))
+	var indicies = PackedInt32Array()
+	for i in sections*2:
+		indicies.append(i*3)
+		indicies.append(i*3+1)
+		indicies.append(i*3+2)
+		indicies.append(i*3+1)
+		indicies.append(i*3+2)
+		indicies.append(i*3+3)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,surface_array)
+	var meshInstance2d = MeshInstance2D.new()
+	meshInstance2d.mesh = mesh
+	var mat = CanvasItemMaterial.new()
+	meshInstance2d.material = mat
+	add_child(meshInstance2d)
 	
 func _draw():
 	var colorA = Color(0.93000000715256, 0.23203498125076, 0.1952999830246)
