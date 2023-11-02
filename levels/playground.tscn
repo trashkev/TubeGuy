@@ -4,13 +4,14 @@
 [ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
 [ext_resource type="Shader" path="res://VerletObject.gdshader" id="3_31x0s"]
 [ext_resource type="PackedScene" uid="uid://0joi3mldqkq7" path="res://platform.tscn" id="3_meopj"]
-[ext_resource type="Texture2D" uid="uid://bnbunenbh5hi8" path="res://guy1.png" id="4_ysm8a"]
+[ext_resource type="Texture2D" uid="uid://bs64phnvp8xpd" path="res://icon.svg" id="5_erv0v"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_velg6"]
+resource_local_to_scene = true
 shader = ExtResource("3_31x0s")
 shader_parameter/pointPos = null
 shader_parameter/pointCount = null
-shader_parameter/tiling = Vector2(4.73, 1.615)
+shader_parameter/tiling = Vector2(1, 8)
 
 [node name="Playground" type="Node2D"]
 
@@ -45,6 +46,8 @@ position = Vector2(590, 622)
 
 [node name="VerletObject" type="Node2D" parent="."]
 texture_filter = 1
+texture_repeat = 2
 script = ExtResource("2_l8ams")
+drawPointsAndSticks = true
 mat = SubResource("ShaderMaterial_velg6")
-texture = ExtResource("4_ysm8a")
+texture = ExtResource("5_erv0v")
