@@ -103,6 +103,8 @@ class Stick:
 		
 	func Update():
 		#TODO the movement of the points should be relative to their mass
+		# They ARE kinda... but its wrong, mass less than 1 freaks out
+		#TODO: give sticks min and max length
 		var dx = self.p1.x - self.p0.x
 		var dy = self.p1.y - self.p0.y
 		var dist = sqrt(dx*dx+dy*dy)
@@ -135,17 +137,21 @@ func Simulate():
 		externalForce.x += 2500
 	
 	
-	
-	#calculate inflatedness + add inflate force
-	for i in points.size():
+	for i in bodyPointCount:
 		var p
 		if (i+1)%2==0:
 			p = i-1
 		else:
 			p = i
-		var lengthPercent = float(p)/(points.size())
+		var lengthPercent = float(p)/bodyPointCount
 		var softness = 0.8
 		points[i].inflatedness = 1-SmoothStep(inflatePercentage, inflatePercentage+softness,lengthPercent+softness)
+	for i in armPoints.size():
+		print("ARM LOOP ",i)
+		armPoints[i].inflatedness = points[(sections-armsSectionFromTop)*2].inflatedness
+	#add inflate force
+	for i in points.size():
+		
 		#points[i].inflatedness = clamp(points[i].inflatedness,0.0,1.0)
 		var inflate = Vector2(0.0,points[i].inflatedness * -inflateForce)
 		#todo: add bool for affected by inflate to point
@@ -301,7 +307,17 @@ func GenerateRope():
 
 @export var topStiffness = 0.575
 @export var topClampLength = true
+@export var armsSectionFromTop = 1
+@export var armsPointCount = 4
+@export var armsDistance = 25
+@export var armsPointMass = 1
+var bodyPointCount
+
+var armPoints :Array[Point] = []
 func GenerateGuy():
+	points.clear()
+	sticks.clear()
+	armPoints.clear()
 	#first section
 	points.append(Point.new(startPos.x,startPos.y,500,false))
 	points.append(Point.new(startPos.x+horizontalDistance,startPos.y,500,false))
@@ -324,8 +340,35 @@ func GenerateGuy():
 		#X sticks
 		sticks.append(Stick.new(points[0+i*2],points[3+i*2],Distance(points[0+i*2],points[3+i*2]),crossbarStiffness,false,crossbarClampLength))
 		sticks.append(Stick.new(points[1+i*2],points[2+i*2],Distance(points[1+i*2],points[2+i*2]),crossbarStiffness,false,crossbarClampLength))
+	bodyPointCount = points.size()
+	#arms
 	
-
+	for i in armsPointCount:
+		var pointToAdd :Point
+		var xPos = points[(sections-armsSectionFromTop)*2].x - (armsDistance*(i+1))
+		var yPos = points[(sections-armsSectionFromTop)*2].y
+		pointToAdd = Point.new(xPos,yPos,armsPointMass,false)
+		points.append(pointToAdd)
+		armPoints.append(pointToAdd)
+	var armStartIndex = points.size()-armsPointCount
+	print(armStartIndex)
+	
+	sticks.append(Stick.new(points[(sections-armsSectionFromTop)*2],points[armStartIndex],Distance(points[(sections-armsSectionFromTop)*2],points[armStartIndex]),1.0,false,true))
+	for i in armsPointCount-1:
+		sticks.append(Stick.new(points[armStartIndex+i],points[armStartIndex+(i+1)],Distance(points[armStartIndex+i],points[armStartIndex+(i+1)]),1.0,false,true))
+	
+	for i in armsPointCount:
+			var pointToAdd :Point
+			var xPos = points[(sections-armsSectionFromTop)*2+1].x + (armsDistance*(i+1))
+			var yPos = points[(sections-armsSectionFromTop)*2].y
+			pointToAdd = Point.new(xPos,yPos,armsPointMass,false)
+			points.append(pointToAdd)
+			armPoints.append(pointToAdd)
+	armStartIndex = points.size()-armsPointCount
+	sticks.append(Stick.new(points[(sections-armsSectionFromTop)*2+1],points[armStartIndex],Distance(points[(sections-armsSectionFromTop)*2+1],points[armStartIndex]),1.0,false,true))
+	for i in armsPointCount-1:
+		sticks.append(Stick.new(points[armStartIndex+i],points[armStartIndex+(i+1)],Distance(points[armStartIndex+i],points[armStartIndex+(i+1)]),1.0,false,true))
+			
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
 		shape.radius = collisionRadius
@@ -363,8 +406,7 @@ func _physics_process(delta):
 		inflatePercentage = clamp(inflatePercentage,0.0,1.0)
 	
 	if(Input.is_action_just_pressed("place")):
-		points.clear()
-		sticks.clear()
+		
 		GenerateGuy()
 		#PlacePoint(false)
 		#print("Placed point at ",points[0].x, ", ",points[0].y)
@@ -384,16 +426,6 @@ func _physics_process(delta):
 		#print("simulate ", points[0].x, ", ",points[0].y)
 		timeAccum = 0;
 
-#TODO: generate mesh2D using SurfaceTool
-#create meshInstance and set created mesh
-#create material using verlet mesh renderer, and pass vertex indicies to the shader using SurfaceTool.SetCustom use CUSTOMX
-#write a shader that takes in
-#	a vector 2 array of the point positions in the same order as their coresponding vertex
-#	calculates the vertex position of each vert relative to the vertex indicies provided
-#	calculates UVs for the mesh
-#	EXTRA:
-#		shader takes in a float parameter for inflating amount, which it uses to animate a noise wobble effect on the streamers on head
-
 @export var mat :ShaderMaterial
 @export var texture: Texture2D
 var mesh :Mesh
@@ -405,7 +437,7 @@ func GenerateMesh():
 	
 	var verts = PackedVector3Array()
 	#print(points.size())
-	for i in (points.size()):
+	for i in (bodyPointCount):
 		verts.append(Vector3(0,0,0))
 	
 	var indicies = PackedInt32Array()
@@ -422,7 +454,7 @@ func GenerateMesh():
 	surface_array[Mesh.ARRAY_INDEX] = indicies
 	
 	var pointIndicies :PackedVector2Array = []
-	for i in points.size():
+	for i in bodyPointCount:
 		pointIndicies.append(Vector2(i,0))
 		print(pointIndicies[i])
 		#print(Vector2(points[i].x,points[i].y))
@@ -441,10 +473,10 @@ func GenerateMesh():
 
 func UpdateMesh():
 	var pointPos = [128]
-	for i in points.size():
+	for i in bodyPointCount:
 		pointPos.append(Vector2(points[i].x,points[i].y))
 		mat.set_shader_parameter("pointPos",pointPos)
-		mat.set_shader_parameter("pointCount",points.size())
+		mat.set_shader_parameter("pointCount",bodyPointCount)
 
 func DrawPointsAndSticks():
 	for stick in sticks:

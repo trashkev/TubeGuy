@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://d2npb50luppe1"]
 
-[ext_resource type="Texture2D" uid="uid://b4kjo4t5nlkxk" path="res://texture_07.png" id="1_hfbim"]
+[ext_resource type="Texture2D" uid="uid://b748du3ojjhe5" path="res://texture_08.png" id="1_f5dli"]
 [ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
 [ext_resource type="Shader" path="res://VerletObject.gdshader" id="3_31x0s"]
 [ext_resource type="PackedScene" uid="uid://0joi3mldqkq7" path="res://platform.tscn" id="3_meopj"]
@@ -20,7 +20,7 @@ z_index = -2
 texture_repeat = 2
 position = Vector2(453, 230)
 scale = Vector2(0.403459, 0.403459)
-texture = ExtResource("1_hfbim")
+texture = ExtResource("1_f5dli")
 region_enabled = true
 region_rect = Rect2(-1004, -625, 3802, 2400)
 
@@ -49,5 +49,6 @@ texture_filter = 1
 texture_repeat = 2
 script = ExtResource("2_l8ams")
 drawPointsAndSticks = true
+armsPointCount = 5
 mat = SubResource("ShaderMaterial_velg6")
 texture = ExtResource("5_erv0v")
