@@ -37,7 +37,7 @@ position = Vector2(-23, 363)
 rotation = 1.57079
 
 [node name="Platform4" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(-775, -48)
+position = Vector2(582, -32)
 rotation = 3.14159
 scale = Vector2(1.24, 1)
 
@@ -48,8 +48,22 @@ position = Vector2(590, 622)
 texture_filter = 1
 texture_repeat = 2
 script = ExtResource("2_l8ams")
-topStiffness = 1.0
-armsPointCount = 6
+inflateStiffnessMultiplier = null
+sections = null
+verticalDistance = null
+horizontalDistance = null
+pointMass = null
+sideStiffness = null
+sideClampLength = null
+crossbarStiffness = null
+crossbarClampLength = null
+topStiffness = 0.0
+topClampLength = null
+armsSectionFromTop = null
+armsPointCount = 5
+armsDistance = null
+armsPointMass = null
+softness = null
 mat = SubResource("ShaderMaterial_velg6")
 texture = ExtResource("5_erv0v")
 drawPointsAndSticks = true
