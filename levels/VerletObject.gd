@@ -1,19 +1,19 @@
 extends Node2D
 
 var pointColor :Color
-var collisionRadius :float = 8.0
+var collisionRadius :float = 16.0
 var timeAccum = 0.0
 var stepTime = 0.01
 var maxStep = 0.1
-var constraintIterations = 50
-var collisionIterations = 15
+var constraintIterations = 15
+var collisionIterations = 5
 
-var startPos :Vector2 = Vector2(660,650)
+var startPos :Vector2 = Vector2(500,650)
 var targetPos = startPos
 
-var count = 1
-var spacing = 10
-
+@export var count = 3
+@export var spacing = 120
+@export var angleLimit = 50
 var bounciness = .1
 var friction = 0.01
 
@@ -45,7 +45,6 @@ var time = 0.0
 @export var armsDistance = 25.0
 @export var armsPointMass :float = 1.0
 @export var softness = 0.8
-var bodyPointCount
 
 @export var mat :ShaderMaterial
 @export var texture: Texture2D
@@ -133,36 +132,41 @@ class Stick:
 	var length :float
 	var startStiffness :float
 	var stiffness :float
-	var inflatable :bool
-	var clampLength :bool
-	func _init(p0,p1,length,startStiffness,inflatable,clampLength):
+	var minLength :float
+	var maxLength :float
+	
+	var draw :bool = true
+	
+	var color :Color = Color.DEEP_PINK
+	func _init(p0,p1,length,startStiffness,minLength,maxLength):
 		self.p0 = p0
 		self.p1 = p1
 		self.length = length
 		self.startStiffness = startStiffness
 		self.stiffness = startStiffness
-		self.inflatable = inflatable
-		self.clampLength = clampLength
-		
+		self.minLength = minLength
+		self.maxLength = maxLength
 	func Update(iterations:int):
-		#TODO the movement of the points should be relative to their mass
-		# They ARE kinda... but its wrong, mass less than 1 freaks out
-		#TODO: give sticks min and max length
 		var dx = self.p1.x - self.p0.x
 		var dy = self.p1.y - self.p0.y
 		var dist = sqrt(dx*dx+dy*dy)
+		
+		if dist > maxLength:
+			self.length = maxLength
+		if dist < minLength:
+			self.length = minLength
+		
 		var diff = self.length - dist
 		var percent = (diff / dist) / 2
 		
-		# -diff is too long
-		# +diff is too short
 		var useMass :bool
-		if (diff > 0 or !self.clampLength): #and dist > self.length * 0.25
+		
+		if (dist < maxLength and dist > minLength):
 			percent *= stiffness / iterations
 			useMass = true
 		else:
 			useMass = false
-			
+		
 		var offset_x = dx * percent
 		var offset_y = dy * percent
 		
@@ -184,6 +188,7 @@ class Stick:
 class Arm:
 	var points :Array[Point] = []
 	var bodyConnectionIndex :int
+	var startIndex :int
 var bodyPoints :Array[Point] = []
 var arms :Array[Arm] = []
 var points :Array[Point] = []
@@ -196,7 +201,8 @@ func Simulate():
 		externalForce.x -= 2500
 	if Input.is_action_pressed("inflate_right"):
 		externalForce.x += 2500
-	
+	if Input.is_action_pressed("inflate"):
+		externalForce.y -= 2500
 	#calculate inflatedness
 	for i in bodyPoints.size():
 		var p
@@ -225,13 +231,13 @@ func Simulate():
 	
 	#apply stick stiffness based on average connected point inflatedness
 	for i in sticks.size():
-		if sticks[i].inflatable:
-			var averageInflatedness = (sticks[i].p0.inflatedness + sticks[i].p1.inflatedness) / 2.0
-			sticks[i].stiffness = sticks[i].startStiffness
-			sticks[i].stiffness = lerp(sticks[i].startStiffness,sticks[i].startStiffness*inflateStiffnessMultiplier,averageInflatedness)
-			sticks[i].stiffness = clamp(sticks[i].stiffness,0.0,1.0)
-		else:
-			sticks[i].stiffness = sticks[i].startStiffness
+#		if sticks[i].inflatable:
+#			var averageInflatedness = (sticks[i].p0.inflatedness + sticks[i].p1.inflatedness) / 2.0
+#			sticks[i].stiffness = sticks[i].startStiffness
+#			sticks[i].stiffness = lerp(sticks[i].startStiffness,sticks[i].startStiffness*inflateStiffnessMultiplier,averageInflatedness)
+#			sticks[i].stiffness = clamp(sticks[i].stiffness,0.0,1.0)
+#		else:
+		sticks[i].stiffness = sticks[i].startStiffness
 			
 	#update sticks iteratively
 	for constraintIteration in constraintIterations:
@@ -333,17 +339,48 @@ func AdjustCollisions():
 	queue_redraw()
 
 func GenerateRope():
+	points.clear()
+	sticks.clear()
 	for i in count:
 		var point
 		if i == 0:
-			point = Point.new(startPos.x,startPos.y + i*spacing,0.2,true)
+			point = Point.new(startPos.x,startPos.y + i*spacing,1.0,true)
 		else:
-			point = Point.new(startPos.x,startPos.y + i*spacing,0.2,false)
+			point = Point.new(startPos.x+ i*spacing,startPos.y ,1.0,false)
 		points.append(point)
 	for i in count-1:
 		var stick
-		stick = Stick.new(points[i],points[i+1],Distance(points[i],points[i+1]),1.0,false,false)
+		var a = points[i]
+		var b = points[i+1]
+		var dist = Distance(a,b)
+		stick = Stick.new(a,b,dist,1.0,0.0,dist)
 		sticks.append(stick)
+	
+	
+	for i in points.size():
+		if !(i == 0 or i == points.size()-1):
+			var angleConstraintStick = Stick.new(points[i-1],points[i+1],angleLimit/2.0,0.0,angleLimit,INF)
+			angleConstraintStick.draw = false
+			sticks.append(angleConstraintStick)
+	
+	for n in get_children():
+		if n is Area2D:
+			remove_child(n)
+			n.queue_free()
+	for point in points:
+		var shape :CircleShape2D = CircleShape2D.new()
+		shape.radius = collisionRadius
+		var collision = CollisionShape2D.new()
+		collision.set_shape(shape)
+		point.collisionShape = collision
+		
+		#TODO: get rid of area2Ds when generating new guy
+		var area2d = Area2D.new()
+		area2d.add_child(collision)
+		point.area2d = area2d
+		add_child(area2d)
+		
+		point.gravity = 500
 
 func GenerateGuy():
 	for n in get_children():
@@ -384,7 +421,6 @@ func GenerateGuy():
 		#X sticks
 		sticks.append(Stick.new(points[0+i*2],points[3+i*2],Distance(points[0+i*2],points[3+i*2]),crossbarStiffness,false,crossbarClampLength))
 		sticks.append(Stick.new(points[1+i*2],points[2+i*2],Distance(points[1+i*2],points[2+i*2]),crossbarStiffness,false,crossbarClampLength))
-	bodyPointCount = points.size()
 	bodyPoints = points 
 	
 	#ARMS
@@ -414,7 +450,7 @@ func GenerateArm(dir :float):
 	if dir > 0:
 		offset = 1.0
 	arm.bodyConnectionIndex = (sections-armsSectionFromTop)*2+ offset
-	
+	arm.startIndex = points.size()
 	
 	for i in armsPointCount:
 		var pointToAdd :Point
@@ -440,7 +476,7 @@ func GenerateMesh():
 	
 	var verts = PackedVector3Array()
 	#print(points.size())
-	for i in (bodyPointCount):
+	for i in (bodyPoints.size()):
 		verts.append(Vector3(0,0,0))
 	
 	var indicies = PackedInt32Array()
@@ -453,15 +489,32 @@ func GenerateMesh():
 		indicies.append(i*2+2)
 		indicies.append(i*2+3)
 	
+	#arms mesh verts + tris
+	for arm in arms:
+		for i in (arm.points.size()+1)*2:
+			verts.append(Vector3(0,0,0))
+			pass
+		for i in (arm.points.size()+1):
+			indicies.append(i*2)
+			indicies.append(i*2+3)
+			indicies.append(i*2+1)
+			indicies.append(i*2)
+			indicies.append(i*2+2)
+			indicies.append(i*2+3)
+	
 	surface_array[Mesh.ARRAY_VERTEX] = verts
 	surface_array[Mesh.ARRAY_INDEX] = indicies
 	
-	var pointIndicies :PackedVector2Array = []
-	for i in bodyPointCount:
-		pointIndicies.append(Vector2(i,0))
-		print(pointIndicies[i])
-		#print(Vector2(points[i].x,points[i].y))
-	surface_array[Mesh.ARRAY_TEX_UV] = pointIndicies
+	var vertPointIndicies :PackedVector2Array = []
+	
+	for i in bodyPoints.size():
+		vertPointIndicies.append(Vector2(i,0))
+	for arm in arms:
+		for i in (arm.points.size()+1)*2:
+			vertPointIndicies.append(Vector2(arm.startIndex+i,0))
+			pass
+	print(vertPointIndicies.size())
+	surface_array[Mesh.ARRAY_TEX_UV] = vertPointIndicies
 	
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,surface_array)
 	
@@ -476,16 +529,18 @@ func GenerateMesh():
 
 func UpdateMesh():
 	var pointPos = [128]
-	for i in bodyPointCount:
-		pointPos.append(Vector2(points[i].x,points[i].y))
-		mat.set_shader_parameter("pointPos",pointPos)
-		mat.set_shader_parameter("pointCount",bodyPoints.size())
+	for i in bodyPoints.size():
+		pointPos.append(Vector2(bodyPoints[i].x,bodyPoints[i].y))
+	mat.set_shader_parameter("pointPos",pointPos)
+	mat.set_shader_parameter("bodyVertCount",bodyPoints.size())
+	mat.set_shader_parameter("armsVertCount",(armsPointCount+1)*2*arms.size())
 
 func DrawPointsAndSticks():
 	for stick in sticks:
 		var col :Color
 		col = lerp(Color.RED,Color.GREEN,stick.stiffness)
-		draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),col,collisionRadius*0.5)
+		if stick.draw:
+			draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),stick.color,collisionRadius*0.5)
 	
 	for i in points.size() as float:
 		var size = collisionRadius
@@ -495,15 +550,36 @@ func DrawPointsAndSticks():
 		var col = lerp(Color.BLACK,Color.WHITE,points[i].inflatedness)
 		draw_circle(Vector2(points[i].x,points[i].y),size,col)
 	
+	for i in points.size():
+		if !(i == 0 or i == points.size()-1):
+			var dirToNext
+			var dirToPrevious
+			var currentPos = Vector2(points[i].x,points[i].y)
+			var nextPos = Vector2(points[i+1].x,points[i+1].y)
+			var previousPos = Vector2(points[i-1].x,points[i-1].y)
+
+			dirToNext = (nextPos - currentPos).normalized()
+			dirToPrevious = (previousPos - currentPos).normalized()
+
+			var dirOutFromNext = (Vector2(dirToNext.y,-dirToNext.x)).normalized()
+			var dirOutFromPrevious = -(Vector2(dirToPrevious.y,-dirToPrevious.x)).normalized()
+			var dirOut = (dirOutFromNext+dirOutFromPrevious).normalized()
+			if dirOut == Vector2(0.0,0.0):
+				dirOut = dirOutFromNext
+
+			draw_line(currentPos,currentPos + 15*dirOut,Color.BLUE,5.0)
+			draw_line(currentPos,currentPos + 15*-dirOut,Color.RED,5.0)
+				
 	for i in debugDrawPos.size():
 		draw_circle(debugDrawPos[i],5,debugDrawCol[i])
 
 func _ready():
+	pass
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
-	#GenerateRope()
+	GenerateRope()
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
-	GenerateGuy()
-	GenerateMesh()
+	#GenerateGuy()
+	#GenerateMesh()
 	#sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
 
 func _physics_process(delta):
@@ -520,8 +596,9 @@ func _physics_process(delta):
 		inflatePercentage = clamp(inflatePercentage,0.0,1.0)
 	
 	if(Input.is_action_just_pressed("place")):
-		
-		GenerateGuy()
+		startPos = get_global_mouse_position()
+		GenerateRope()
+		#GenerateGuy()
 		#PlacePoint(false)
 		#print("Placed point at ",points[0].x, ", ",points[0].y)
 	if(Input.is_action_just_pressed("shove")):
@@ -541,7 +618,7 @@ func _physics_process(delta):
 		timeAccum = 0;
 
 func _draw():
-	UpdateMesh()
+	#UpdateMesh()
 	if(drawPointsAndSticks):
 		DrawPointsAndSticks()
 

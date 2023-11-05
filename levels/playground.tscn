@@ -10,7 +10,10 @@
 resource_local_to_scene = true
 shader = ExtResource("3_31x0s")
 shader_parameter/pointPos = null
-shader_parameter/pointCount = null
+shader_parameter/bodyVertCount = null
+shader_parameter/armsVertCount = null
+shader_parameter/leftArmConnectionIndex = null
+shader_parameter/rightArmConnectionIndex = null
 shader_parameter/tiling = Vector2(1, 1)
 
 [node name="Playground" type="Node2D"]
@@ -26,14 +29,14 @@ region_rect = Rect2(-1004, -625, 3802, 2400)
 
 [node name="Platform" parent="." instance=ExtResource("3_meopj")]
 position = Vector2(554, 683)
-scale = Vector2(1.2, 1)
+scale = Vector2(2.2, 1)
 
 [node name="Platform2" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(1180, 371)
+position = Vector2(2253, 363)
 rotation = 1.57079
 
 [node name="Platform3" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(-23, 363)
+position = Vector2(-466, 336)
 rotation = 1.57079
 
 [node name="Platform4" parent="." instance=ExtResource("3_meopj")]
@@ -48,8 +51,11 @@ position = Vector2(590, 622)
 texture_filter = 1
 texture_repeat = 2
 script = ExtResource("2_l8ams")
+count = 15
+spacing = 25
+angleLimit = 25
 topStiffness = 1.0
-armsPointCount = 6
+armsDistance = 40.0
 mat = SubResource("ShaderMaterial_velg6")
 texture = ExtResource("5_erv0v")
 drawPointsAndSticks = true
