@@ -28,8 +28,8 @@ region_enabled = true
 region_rect = Rect2(-1004, -625, 3802, 2400)
 
 [node name="Platform" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(554, 1112)
-scale = Vector2(2.2, 13.44)
+position = Vector2(554, 683)
+scale = Vector2(2.2, 1)
 
 [node name="Platform2" parent="." instance=ExtResource("3_meopj")]
 position = Vector2(2253, 363)
@@ -45,7 +45,7 @@ rotation = 3.14159
 scale = Vector2(1.24, 1)
 
 [node name="Platform5" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(-1151, -82)
+position = Vector2(-119, -92)
 rotation = 3.14159
 scale = Vector2(1.24, 1)
 
@@ -59,9 +59,7 @@ script = ExtResource("2_l8ams")
 mat = SubResource("ShaderMaterial_velg6")
 texture = ExtResource("5_erv0v")
 bodySpacing = 50.0
-bodyMinAngle = 100.0
-armsMinAngle = 100.0
-shoulderDistance = 25.211
+bodyMinAngle = 90.0
 inflateForce = 4000.0
 softness = 0.305
 drawPointsAndSticks = true
