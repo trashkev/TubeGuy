@@ -46,19 +46,19 @@ void vertex(){
 	VERTEX = pointPos[currentPointIndex] + width * side * dirOut;
 	
 	//calculate UVs
-//	if((currentVertIndex % 2) == 0){
-//		texUV.x = 0.0;
-//		texUV.y = 1.0-(float(currentVertIndex)/float(maxYindex));
-//	}else{
-//		texUV.x = 1.0/tiling.x;
-//		texUV.y = 1.0-(float(currentVertIndex)-1.0)/float(maxYindex);
-//	}
+	if((currentVertIndex % 2) == 0){
+		texUV.x = 1.0/tiling.x;
+		texUV.y = (float(currentPointIndex)/float(pointCount));
+	}else{
+		texUV.x = 0.0;
+		texUV.y = (float(currentPointIndex))/float(pointCount);
+	}
 	
-//	texUV.y *= tiling.y;
+	texUV.y *= tiling.y;
 }
 void fragment() {
 //	vec4 texColor = texture(TEXTURE,texUV);
 //	COLOR = texColor;
-	COLOR = vec4(mainColor,1.0);
+	COLOR = vec4(texUV.x,texUV.y,0.0,1.0);
 	// Place fragment code here.
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://d2npb50luppe1"]
+[gd_scene load_steps=9 format=3 uid="uid://d2npb50luppe1"]
 
 [ext_resource type="Texture2D" uid="uid://b748du3ojjhe5" path="res://texture_08.png" id="1_f5dli"]
 [ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
@@ -7,6 +7,7 @@
 [ext_resource type="Material" uid="uid://q3wuje0hmlo0" path="res://Materials/TubeGuyBody_01.tres" id="5_omcxf"]
 [ext_resource type="Texture2D" uid="uid://cyv1n1vtyc2iy" path="res://texture_01.png" id="6_sgund"]
 [ext_resource type="Material" uid="uid://bebs01ux53gxc" path="res://Materials/TubeGuyArms_01.tres" id="7_y3c68"]
+[ext_resource type="Material" uid="uid://bq3pq45ee472f" path="res://Materials/TubeGuyArms_02.tres" id="8_550hb"]
 
 [node name="Playground" type="Node2D"]
 
@@ -51,10 +52,16 @@ script = ExtResource("2_l8ams")
 bodyTexture = ExtResource("5_erv0v")
 bodyMaterial = ExtResource("5_omcxf")
 bodySpacing = 50.0
-bodyMinAngle = 99.515
+bodyMinAngle = 112.619
+bodyCollisionRadius = 15.0
 armsTexture = ExtResource("6_sgund")
 armsMaterial = ExtResource("7_y3c68")
+armsMaterial2 = ExtResource("8_550hb")
+armsConnectionPointFromTop = 2
+armsPointCount = 6
+armsSpacing = 25.0
+armsMinAngle = 39.506
 shoulderDistance = 25.211
 inflateForce = 4000.0
-softness = 0.305
+softness = 0.16
 drawPointsAndSticks = true

@@ -9,4 +9,4 @@ shader_parameter/pointPos = null
 shader_parameter/pointCount = null
 shader_parameter/mainColor = Vector3(1, 0, 0)
 shader_parameter/tiling = Vector2(1, 1)
-shader_parameter/width = 20.0
+shader_parameter/width = 40.0

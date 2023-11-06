@@ -6,7 +6,7 @@ var pointColor :Color
 @export var timeAccum = 0.0
 @export var stepTime = 0.01
 @export var maxStep = 0.1
-@export var constraintIterations = 15
+@export var constraintIterations = 20
 @export var collisionIterations = 5
 @export var bounciness = .1
 @export var friction = 0.0
@@ -14,7 +14,6 @@ var time = 0.0
 
 @export_group("Object Generation")
 @export var startPos :Vector2 = Vector2(500,650)
-@export var collisionRadius :float = 8.0
 
 @export_subgroup("Body")
 @export var bodyTexture: Texture2D
@@ -24,16 +23,20 @@ var time = 0.0
 @export_range(0.0,1.0) var bodyStiffness :float = 1.0
 @export_range(0.0,180.0) var bodyMinAngle :float = 50.0
 @export_range(0.001,10.0) var bodyPointMass = 1.0
+@export var bodyCollisionRadius :float = 8.0
+
 
 @export_subgroup("Arms")
 @export var armsTexture: Texture2D
 @export var armsMaterial :Material
+@export var armsMaterial2 :Material
 @export var armsConnectionPointFromTop = 1
 @export_range(3,15) var armsPointCount :int = 4
 @export_range(10.0,300.0) var armsSpacing = 50.0
 @export_range(0.0,1.0) var armsStiffness = 1.0
 @export_range(0.0,180.0) var armsMinAngle = 15.0
 @export_range(0.001,10.0) var armsPointMass :float = 1.0
+@export var armsCollisionRadius :float = 8.0
 @export_range(10.0,600.0) var shoulderDistance :float = 50.0
 
 var quadStripMeshes :Array[QuadStripMesh] = []
@@ -95,6 +98,7 @@ class Point:
 	var externalForce :Vector2
 	var area2d : Area2D
 	var collisionShape :CollisionShape2D
+	var collisionRadius :float = 8.0
 	
 	var inflatedness :float
 
@@ -277,7 +281,7 @@ func AdjustCollisions():
 						var scalar :Vector2 = body.scale
 						
 						var collisionNormal = (pointPos - body.position).normalized()
-						hitPos = body.global_position + collisionNormal * (collisionShape.radius * scalar.x + collisionRadius)
+						hitPos = body.global_position + collisionNormal * (collisionShape.radius * scalar.x + point.collisionRadius)
 						edgePos = body.global_position + collisionNormal * (collisionShape.radius * scalar.x)
 						
 						var u = velocity.dot(collisionNormal)*collisionNormal
@@ -297,7 +301,7 @@ func AdjustCollisions():
 						var dy = localPoint.y
 						var py = half.y - abs(dy)
 						
-						if abs(dx) > half.x+collisionRadius or abs(dy) > half.y+collisionRadius:
+						if abs(dx) > half.x + point.collisionRadius or abs(dy) > half.y + point.collisionRadius:
 							return
 							
 						var boxEdgePoint = Vector2(0,0)
@@ -322,7 +326,7 @@ func AdjustCollisions():
 							#print(abs(dx)," ",half.x," ", abs(dy)," ",half.y)
 							collisionNormal = -collisionNormal
 						
-						hitPos = boxEdgePoint + (collisionRadius) * (collisionNormal)
+						hitPos = boxEdgePoint + (point.collisionRadius) * (collisionNormal)
 						
 						var u = velocity.dot(collisionNormal)*collisionNormal
 						var w = velocity-u
@@ -353,7 +357,7 @@ func SetUpCollisions():
 			n.queue_free()
 	for point in points:
 		var shape :CircleShape2D = CircleShape2D.new()
-		shape.radius = collisionRadius
+		shape.radius = point.collisionRadius
 		var collision = CollisionShape2D.new()
 		collision.set_shape(shape)
 		point.collisionShape = collision
@@ -410,16 +414,17 @@ func GenerateGuy():
 	
 	#generate body line
 	for i in bodyPointCount:
-		var point
+		var point :Point
 		if i == 0:
 			point = Point.new(startPos.x,startPos.y + i*bodySpacing,1.0,true)
 		else:
 			point = Point.new(startPos.x+ i*bodySpacing,startPos.y ,1.0,false)
+		point.collisionRadius = bodyCollisionRadius
 		points.append(point)
 		bodyPoints.append(point)
 	
 	for i in bodyPointCount-1:
-		var stick
+		var stick :Stick
 		var a = points[i]
 		var b = points[i+1]
 		var dist = Distance(a,b)
@@ -452,6 +457,7 @@ func GenerateArm(dir :Vector2 = Vector2(1.0,0.0)):
 		var xPos = points[arm.bodyConnectionIndex].x  + (bodySpacing/2.0)
 		var yPos = points[arm.bodyConnectionIndex].y + armsSpacing * i * dir.y + shoulderDistance * dir.y
 		pointToAdd = Point.new(xPos,yPos,armsPointMass,false)
+		pointToAdd.collisionRadius = armsCollisionRadius
 		points.append(pointToAdd)
 		arm.points.append(pointToAdd)
 	
@@ -463,18 +469,24 @@ func GenerateArm(dir :Vector2 = Vector2(1.0,0.0)):
 	var ad = bodySpacing/2
 	var dc = shoulderDistance
 	var shoulderStickLength = sqrt(ad*ad + dc*dc)
-	var stick = Stick.new(a,c,shoulderStickLength,1.0,0.0,INF)
+	var stick = Stick.new(a,c,shoulderStickLength,1.0,shoulderStickLength,shoulderStickLength)
 	stick.color = Color.PURPLE
 	sticks.append(stick)
-	stick = Stick.new(b,c,shoulderStickLength,1.0,0.0,INF)
+	stick = Stick.new(b,c,shoulderStickLength,1.0,shoulderStickLength,shoulderStickLength)
 	stick.color = Color.PURPLE
 	sticks.append(stick)
+	
 	#arm sticks
 	for i in armsPointCount-1:
 		var dist = Distance(arm.points[i],arm.points[(i+1)])
-		stick = Stick.new(arm.points[i],arm.points[(i+1)],dist,armsStiffness,0.0,INF)
+		stick = Stick.new(arm.points[i],arm.points[(i+1)],dist,armsStiffness,0.0,dist)
 		stick.color = Color.YELLOW
 		sticks.append(stick)
+		
+	#arm angle constraints
+	for i in arm.points.size():
+		if !(i == 0 or i == arm.points.size()-1):
+			CreateAngleConstraint(arm.points[i-1],arm.points[i+1],arm.points[i],armsMinAngle)
 	return arm
 
 func CreateMeshFromPoints(p_points :Array[Point]):
@@ -526,9 +538,14 @@ func GenerateMeshes():
 	quadStripMeshes.append(bodyQuadStripMesh)
 	
 	#create arms Meshes
-	for arm in arms:
-		var armMesh = CreateMeshFromPoints(arm.points)
-		var armQuadStripMesh = QuadStripMesh.new(arm.points,armMesh,armsMaterial,armsTexture)
+	for i in arms.size():
+		var armMesh = CreateMeshFromPoints(arms[i].points)
+		var mat
+		if i == 0:
+			mat = armsMaterial
+		else:
+			mat = armsMaterial2
+		var armQuadStripMesh = QuadStripMesh.new(arms[i].points,armMesh,mat,armsTexture)
 		quadStripMeshes.append(armQuadStripMesh)
 		
 	#create, setup, and add as child each quadstripmesh's meshInstance2D
@@ -549,10 +566,10 @@ func DrawPointsAndSticks():
 		#var col :Color
 		#col = lerp(Color.RED,Color.GREEN,stick.stiffness)
 		if stick.draw:
-			draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),stick.color,collisionRadius*0.5)
+			draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),stick.color,5)
 	
 	for i in points.size() as float:
-		var size = collisionRadius
+		var size = points[i].collisionRadius
 		if i > points.size()-1:
 			size = 15
 
@@ -585,14 +602,10 @@ func DrawPointsAndSticks():
 ########### GODOT CALLBACKS ##############
 func _ready():
 	pass
-	#points.append(Point.new(startPos.x,startPos.y,1,false))
+
 	GenerateGuy()
 	SetUpCollisions()
 	GenerateMeshes()
-	#points.append(Point.new(startPos.x,startPos.y,1,false))
-	#GenerateGuy()
-	#GenerateMesh()
-	#sticks.append(Stick.new(points[0],points[1],Distance(points[0],points[1])))
 
 func _physics_process(delta):
 	
