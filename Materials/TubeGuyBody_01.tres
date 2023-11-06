@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://q3wuje0hmlo0"]
+
+[ext_resource type="Shader" path="res://VerletQuadStrip.gdshader" id="1_hqwrx"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_hqwrx")
+shader_parameter/pointPos = null
+shader_parameter/pointCount = null
+shader_parameter/mainColor = Vector3(1, 0, 0)
+shader_parameter/tiling = Vector2(1, 1)
+shader_parameter/width = 20.0

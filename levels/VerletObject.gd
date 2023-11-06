@@ -13,12 +13,12 @@ var pointColor :Color
 var time = 0.0
 
 @export_group("Object Generation")
-@export var mat :ShaderMaterial
-@export var texture: Texture2D
 @export var startPos :Vector2 = Vector2(500,650)
 @export var collisionRadius :float = 8.0
 
 @export_subgroup("Body")
+@export var bodyTexture: Texture2D
+@export var bodyMaterial :Material
 @export_range(3,30) var bodyPointCount :int = 8
 @export_range(10.0,300.0) var bodySpacing :float = 120.0
 @export_range(0.0,1.0) var bodyStiffness :float = 1.0
@@ -26,6 +26,8 @@ var time = 0.0
 @export_range(0.001,10.0) var bodyPointMass = 1.0
 
 @export_subgroup("Arms")
+@export var armsTexture: Texture2D
+@export var armsMaterial :Material
 @export var armsConnectionPointFromTop = 1
 @export_range(3,15) var armsPointCount :int = 4
 @export_range(10.0,300.0) var armsSpacing = 50.0
@@ -34,7 +36,7 @@ var time = 0.0
 @export_range(0.001,10.0) var armsPointMass :float = 1.0
 @export_range(10.0,600.0) var shoulderDistance :float = 50.0
 
-var mesh :Mesh
+var quadStripMeshes :Array[QuadStripMesh] = []
 var bodyPoints :Array[Point] = []
 var arms :Array[Arm] = []
 var points :Array[Point] = []
@@ -96,13 +98,13 @@ class Point:
 	
 	var inflatedness :float
 
-	func _init(x,y,mass,pinned):
-		self.x = x
-		self.y = y
+	func _init(p_x,p_y,p_mass,p_pinned):
+		self.x = p_x
+		self.y = p_y
 		self.old_x = x
 		self.old_y = y
-		self.mass = mass
-		self.pinned = pinned
+		self.mass = p_mass
+		self.pinned = p_pinned
 		
 	func Update(stepTime):
 
@@ -141,14 +143,14 @@ class Stick:
 	var draw :bool = true
 	
 	var color :Color = Color.DEEP_PINK
-	func _init(p0,p1,length,startStiffness,minLength,maxLength):
-		self.p0 = p0
-		self.p1 = p1
-		self.length = length
-		self.startStiffness = startStiffness
-		self.stiffness = startStiffness
-		self.minLength = minLength
-		self.maxLength = maxLength
+	func _init(p_p0,p_p1,p_length,p_startStiffness,p_minLength,p_maxLength):
+		self.p0 = p_p0
+		self.p1 = p_p1
+		self.length = p_length
+		self.startStiffness = p_startStiffness
+		self.stiffness = p_startStiffness
+		self.minLength = p_minLength
+		self.maxLength = p_maxLength
 	func Update(iterations:int):
 		var dx = self.p1.x - self.p0.x
 		var dy = self.p1.y - self.p0.y
@@ -193,6 +195,24 @@ class Arm:
 	var bodyConnectionIndex :int
 	var startIndex :int
 
+class QuadStripMesh:
+	var points : Array[Point]
+	var mesh :Mesh
+	var material :ShaderMaterial
+	var texture :Texture2D
+	var meshInstance2d
+	func _init(p_points :Array[Point],p_mesh :Mesh,p_material :Material,p_texture :Texture2D):
+		self.points = p_points
+		self.mesh = p_mesh
+		self.material = p_material
+		self.texture = p_texture
+	func Update():
+		var pointPos = [128]
+		for i in self.points.size():
+			pointPos.append(Vector2(self.points[i].x,self.points[i].y))
+		self.material.set_shader_parameter("pointPos",pointPos)
+		self.material.set_shader_parameter("pointCount",self.points.size())
+	
 ########### MAIN FUNCTIONS #############
 func Simulate():
 	var externalForce :Vector2 = Vector2(0.0,0.0)
@@ -254,7 +274,6 @@ func AdjustCollisions():
 					var edgePos = Vector2(0,0)
 					
 					if collisionShape is CircleShape2D:
-						var dist = body.global_position.distance_to(pointPos)
 						var scalar :Vector2 = body.scale
 						
 						var collisionNormal = (pointPos - body.position).normalized()
@@ -397,7 +416,8 @@ func GenerateGuy():
 		else:
 			point = Point.new(startPos.x+ i*bodySpacing,startPos.y ,1.0,false)
 		points.append(point)
-	bodyPoints = points 
+		bodyPoints.append(point)
+	
 	for i in bodyPointCount-1:
 		var stick
 		var a = points[i]
@@ -425,7 +445,6 @@ func GenerateGuy():
 func GenerateArm(dir :Vector2 = Vector2(1.0,0.0)):
 	var arm = Arm.new()
 	arm.bodyConnectionIndex = (bodyPointCount - armsConnectionPointFromTop-1)
-	print(arm.bodyConnectionIndex)
 	arm.startIndex = points.size()
 	
 	for i in armsPointCount:
@@ -440,13 +459,10 @@ func GenerateArm(dir :Vector2 = Vector2(1.0,0.0)):
 	var a = points[arm.bodyConnectionIndex]
 	var b = points[arm.bodyConnectionIndex-1]
 	var c = arm.points[0]
-	var d = Vector2((a.x+b.x)/2,(a.y+b.y)/2)
 	
 	var ad = bodySpacing/2
 	var dc = shoulderDistance
 	var shoulderStickLength = sqrt(ad*ad + dc*dc)
-	print("ARM #",arms.size()," ShoulderStickLength: ", shoulderStickLength
-	)
 	var stick = Stick.new(a,c,shoulderStickLength,1.0,0.0,INF)
 	stick.color = Color.PURPLE
 	sticks.append(stick)
@@ -461,77 +477,77 @@ func GenerateArm(dir :Vector2 = Vector2(1.0,0.0)):
 		sticks.append(stick)
 	return arm
 
-func GenerateMesh():
-	mesh = ArrayMesh.new()
+func CreateMeshFromPoints(p_points :Array[Point]):
+	var mesh = ArrayMesh.new()
 	
 	var surface_array = []
 	surface_array.resize(Mesh.ARRAY_MAX)
 	
 	var verts = PackedVector3Array()
-	#print(points.size())
-	for i in (bodyPoints.size()):
+	for i in (p_points.size()*2):
 		verts.append(Vector3(0,0,0))
 	
 	var indicies = PackedInt32Array()
-#	for i in sections:
-#		indicies.append(i*2+1)
-#		indicies.append(i*2)
-#		indicies.append(i*2+2)
-#
-#		indicies.append(i*2+1)
-#		indicies.append(i*2+2)
-#		indicies.append(i*2+3)
-	
-	#arms mesh verts + tris
-	for arm in arms:
-		for i in (arm.points.size()+1)*2:
-			verts.append(Vector3(0,0,0))
-			pass
-		for i in (arm.points.size()+1):
-			indicies.append(i*2)
-			indicies.append(i*2+3)
-			indicies.append(i*2+1)
-			indicies.append(i*2)
-			indicies.append(i*2+2)
-			indicies.append(i*2+3)
-	
+	for i in p_points.size()-1:
+		indicies.append(i*2+1)
+		indicies.append(i*2)
+		indicies.append(i*2+3)
+
+		indicies.append(i*2)
+		indicies.append(i*2+2)
+		indicies.append(i*2+3)
+
 	surface_array[Mesh.ARRAY_VERTEX] = verts
 	surface_array[Mesh.ARRAY_INDEX] = indicies
 	
-	var vertPointIndicies :PackedVector2Array = []
-	
-	for i in bodyPoints.size():
-		vertPointIndicies.append(Vector2(i,0))
-	for arm in arms:
-		for i in (arm.points.size()+1)*2:
-			vertPointIndicies.append(Vector2(arm.startIndex+i,0))
-			pass
-	print(vertPointIndicies.size())
-	surface_array[Mesh.ARRAY_TEX_UV] = vertPointIndicies
+	#STORE EACH VERT'S CORESPONDING POINT IN UV.x
+	var vertIndexIndicies :PackedVector2Array = []
+	for i in p_points.size()*2:
+		vertIndexIndicies.append(Vector2(i,0))
+	surface_array[Mesh.ARRAY_TEX_UV] = vertIndexIndicies
 	
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,surface_array)
 	
-	var meshInstance2d = MeshInstance2D.new()
-	meshInstance2d.mesh = mesh
-	
-	meshInstance2d.material = mat
-	meshInstance2d.texture = texture
-	meshInstance2d.z_index = -1
-	#TODO: get rid or use existing meshInstance2Ds
-	add_child(meshInstance2d)
+	return mesh
 
-func UpdateMesh():
-	var pointPos = [128]
-	for i in bodyPoints.size():
-		pointPos.append(Vector2(bodyPoints[i].x,bodyPoints[i].y))
-	mat.set_shader_parameter("pointPos",pointPos)
-	mat.set_shader_parameter("bodyVertCount",bodyPoints.size())
-	mat.set_shader_parameter("armsVertCount",(armsPointCount+1)*2*arms.size())
+func GenerateMeshes():
+	#remove all child MeshInstance2Ds
+	for n in get_children():
+		if n is MeshInstance2D:
+			remove_child(n)
+			n.queue_free()
+	
+	#clear quadstripmeshes array
+	quadStripMeshes.clear()
+	
+	#create body mesh
+	var bodyMesh = CreateMeshFromPoints(bodyPoints)
+	var bodyQuadStripMesh = QuadStripMesh.new(bodyPoints,bodyMesh,bodyMaterial,bodyTexture)
+	quadStripMeshes.append(bodyQuadStripMesh)
+	
+	#create arms Meshes
+	for arm in arms:
+		var armMesh = CreateMeshFromPoints(arm.points)
+		var armQuadStripMesh = QuadStripMesh.new(arm.points,armMesh,armsMaterial,armsTexture)
+		quadStripMeshes.append(armQuadStripMesh)
+		
+	#create, setup, and add as child each quadstripmesh's meshInstance2D
+	for quadStripMesh in quadStripMeshes:
+		quadStripMesh.meshInstance2d = MeshInstance2D.new()
+		quadStripMesh.meshInstance2d.texture = quadStripMesh.texture
+		quadStripMesh.meshInstance2d.mesh = quadStripMesh.mesh
+		quadStripMesh.meshInstance2d.material = quadStripMesh.material
+		quadStripMesh.meshInstance2d.z_index = -1
+		add_child(quadStripMesh.meshInstance2d)
+
+func UpdateMeshes():
+	for quadStripMesh in quadStripMeshes:
+		quadStripMesh.Update()
 
 func DrawPointsAndSticks():
 	for stick in sticks:
-		var col :Color
-		col = lerp(Color.RED,Color.GREEN,stick.stiffness)
+		#var col :Color
+		#col = lerp(Color.RED,Color.GREEN,stick.stiffness)
 		if stick.draw:
 			draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),stick.color,collisionRadius*0.5)
 	
@@ -572,6 +588,7 @@ func _ready():
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	GenerateGuy()
 	SetUpCollisions()
+	GenerateMeshes()
 	#points.append(Point.new(startPos.x,startPos.y,1,false))
 	#GenerateGuy()
 	#GenerateMesh()
@@ -592,13 +609,9 @@ func _physics_process(delta):
 		startPos = get_global_mouse_position()
 		GenerateGuy()
 		SetUpCollisions()
-		#GenerateGuy()
-		#PlacePoint(false)
-		#print("Placed point at ",points[0].x, ", ",points[0].y)
+		GenerateMeshes()
 	if(Input.is_action_just_pressed("shove")):
 		pass
-		#PlacePoint(true)
-		#print("Placed point at ",points[0].x, ", ",points[0].y)
 		
 	
 	timeAccum += delta
@@ -612,7 +625,7 @@ func _physics_process(delta):
 		timeAccum = 0;
 
 func _draw():
-	#UpdateMesh()
+	UpdateMeshes()
 	if(drawPointsAndSticks):
 		DrawPointsAndSticks()
 
@@ -622,6 +635,8 @@ func _input(event):
 		
 	elif !Input.is_action_pressed("inflate"):
 		inflating = false
+	if event:
+		pass
 	#if Input.is_action_just_pressed("grab"):
 		#points[0].pinned = true
 		
