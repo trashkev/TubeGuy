@@ -6,6 +6,7 @@ varying vec2 texUV;
 uniform vec3 mainColor = vec3(1.0,1.0,1.0);
 
 uniform vec2 tiling = vec2(1.0,1.0);
+uniform vec2 offset = vec2(0.0,0.0);
 uniform float width = 155.0;
 //get height in points
 void vertex(){
@@ -48,17 +49,18 @@ void vertex(){
 	//calculate UVs
 	if((currentVertIndex % 2) == 0){
 		texUV.x = 1.0/tiling.x;
-		texUV.y = (float(currentPointIndex)/float(pointCount));
+		texUV.y = 1.0-(float(currentPointIndex)/float(pointCount));
 	}else{
 		texUV.x = 0.0;
-		texUV.y = (float(currentPointIndex))/float(pointCount);
+		texUV.y = 1.0-(float(currentPointIndex))/float(pointCount);
 	}
 	
 	texUV.y *= tiling.y;
+	texUV += offset;
 }
 void fragment() {
-//	vec4 texColor = texture(TEXTURE,texUV);
-//	COLOR = texColor;
-	COLOR = vec4(texUV.x,texUV.y,0.0,1.0);
+	vec4 texColor = texture(TEXTURE,texUV);
+	COLOR = texColor;
+	//COLOR = vec4(texUV.x,texUV.y,0.0,1.0);
 	// Place fragment code here.
 }

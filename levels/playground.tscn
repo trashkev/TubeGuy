@@ -2,10 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://b748du3ojjhe5" path="res://texture_08.png" id="1_f5dli"]
 [ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
+[ext_resource type="PackedScene" uid="uid://h0od5oy1b0fu" path="res://ball_obstacle.tscn" id="3_b123x"]
 [ext_resource type="PackedScene" uid="uid://0joi3mldqkq7" path="res://platform.tscn" id="3_meopj"]
-[ext_resource type="Texture2D" uid="uid://bs64phnvp8xpd" path="res://icon.svg" id="5_erv0v"]
+[ext_resource type="Texture2D" uid="uid://bnbunenbh5hi8" path="res://guy1.png" id="4_qv8xk"]
 [ext_resource type="Material" uid="uid://q3wuje0hmlo0" path="res://Materials/TubeGuyBody_01.tres" id="5_omcxf"]
-[ext_resource type="Texture2D" uid="uid://cyv1n1vtyc2iy" path="res://texture_01.png" id="6_sgund"]
 [ext_resource type="Material" uid="uid://bebs01ux53gxc" path="res://Materials/TubeGuyArms_01.tres" id="7_y3c68"]
 [ext_resource type="Material" uid="uid://bq3pq45ee472f" path="res://Materials/TubeGuyArms_02.tres" id="8_550hb"]
 
@@ -20,6 +20,31 @@ texture = ExtResource("1_f5dli")
 region_enabled = true
 region_rect = Rect2(-1004, -625, 3802, 2400)
 
+[node name="VerletObject" type="Node2D" parent="."]
+texture_filter = 1
+texture_repeat = 2
+script = ExtResource("2_l8ams")
+bounciness = 0.0
+friction = 0.1
+startPos = Vector2(500, 592)
+bodyTexture = ExtResource("4_qv8xk")
+bodyMaterial = ExtResource("5_omcxf")
+bodyPointCount = 16
+bodySpacing = 25.0
+bodyMinAngle = 171.419
+bodyCollisionRadius = 35.0
+armsTexture = ExtResource("4_qv8xk")
+armsMaterial = ExtResource("7_y3c68")
+armsMaterial2 = ExtResource("8_550hb")
+armsConnectionPointFromTop = 8
+armsPointCount = 6
+armsSpacing = 25.0
+armsMinAngle = 143.104
+armsCollisionRadius = 18.0
+shoulderDistance = 20.646
+inflateForce = 4000.0
+softness = 0.05
+
 [node name="Platform" parent="." instance=ExtResource("3_meopj")]
 position = Vector2(554, 1112)
 scale = Vector2(2.2, 13.44)
@@ -33,9 +58,9 @@ position = Vector2(-466, 336)
 rotation = 1.57079
 
 [node name="Platform4" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(1472, 417)
-rotation = 3.14159
-scale = Vector2(1.24, 1)
+position = Vector2(1280, 415)
+rotation = 3.25112
+scale = Vector2(1.24, 1.68)
 
 [node name="Platform5" parent="." instance=ExtResource("3_meopj")]
 position = Vector2(-1151, -82)
@@ -45,23 +70,6 @@ scale = Vector2(1.24, 1)
 [node name="Node2D" type="Node2D" parent="."]
 position = Vector2(590, 622)
 
-[node name="VerletObject" type="Node2D" parent="."]
-texture_filter = 1
-texture_repeat = 2
-script = ExtResource("2_l8ams")
-bodyTexture = ExtResource("5_erv0v")
-bodyMaterial = ExtResource("5_omcxf")
-bodySpacing = 50.0
-bodyMinAngle = 112.619
-bodyCollisionRadius = 15.0
-armsTexture = ExtResource("6_sgund")
-armsMaterial = ExtResource("7_y3c68")
-armsMaterial2 = ExtResource("8_550hb")
-armsConnectionPointFromTop = 2
-armsPointCount = 6
-armsSpacing = 25.0
-armsMinAngle = 39.506
-shoulderDistance = 25.211
-inflateForce = 4000.0
-softness = 0.16
-drawPointsAndSticks = true
+[node name="BallObstacle3" parent="." instance=ExtResource("3_b123x")]
+position = Vector2(140, 386)
+scale = Vector2(1.07672, 1.07672)

@@ -8,6 +8,7 @@ size = Vector2(1120, 72)
 [node name="Platform" type="StaticBody2D" groups=["environment"]]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 1
 position = Vector2(0, 1)
 texture = ExtResource("1_rv6rv")
 region_enabled = true

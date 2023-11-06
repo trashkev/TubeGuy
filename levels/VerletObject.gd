@@ -569,7 +569,7 @@ func DrawPointsAndSticks():
 			draw_line(Vector2(stick.p0.x,stick.p0.y),Vector2(stick.p1.x,stick.p1.y),stick.color,5)
 	
 	for i in points.size() as float:
-		var size = points[i].collisionRadius
+		var size = 10
 		if i > points.size()-1:
 			size = 15
 
@@ -625,8 +625,11 @@ func _physics_process(delta):
 		GenerateMeshes()
 	if(Input.is_action_just_pressed("shove")):
 		pass
-		
-	
+	if(Input.is_action_just_pressed("enableDebugView")):
+		if drawPointsAndSticks == true:
+			drawPointsAndSticks = false
+		else:
+			drawPointsAndSticks = true
 	timeAccum += delta
 	timeAccum = min(timeAccum,maxStep)
 	while(timeAccum >= stepTime):
