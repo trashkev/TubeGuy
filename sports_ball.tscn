@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://bea2rx82fkqtf"]
+
+[ext_resource type="Script" path="res://grabbable.gd" id="1_0ti46"]
+[ext_resource type="Texture2D" uid="uid://b6f38qam3o82h" path="res://spritesheet_default.png" id="1_qmifs"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_aga7c"]
+friction = 0.47
+bounce = 0.45
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_0dl8a"]
+radius = 41.0122
+
+[node name="SportsBall" type="RigidBody2D" groups=["grabbable"]]
+position = Vector2(357, 215)
+physics_material_override = SubResource("PhysicsMaterial_aga7c")
+freeze_mode = 1
+script = ExtResource("1_0ti46")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_qmifs")
+region_enabled = true
+region_rect = Rect2(0, 387, 80, 80)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_0dl8a")

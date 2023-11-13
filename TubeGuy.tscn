@@ -1,0 +1,45 @@
+[gd_scene load_steps=8 format=3 uid="uid://dn5yrpk1ynetn"]
+
+[ext_resource type="Script" path="res://levels/VerletObject.gd" id="1_11c4g"]
+[ext_resource type="Texture2D" uid="uid://bnbunenbh5hi8" path="res://guy1.png" id="2_j7fm5"]
+[ext_resource type="Material" uid="uid://q3wuje0hmlo0" path="res://Materials/TubeGuyBody_01.tres" id="3_wqpa6"]
+[ext_resource type="Material" uid="uid://bebs01ux53gxc" path="res://Materials/TubeGuyArms_01.tres" id="4_82rxl"]
+[ext_resource type="Material" uid="uid://bq3pq45ee472f" path="res://Materials/TubeGuyArms_02.tres" id="5_bu5vs"]
+[ext_resource type="Script" path="res://levels/Grabber.gd" id="6_ylqdr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_0kjeg"]
+radius = 50.0
+
+[node name="TubeGuy" type="Node2D"]
+texture_filter = 1
+texture_repeat = 2
+script = ExtResource("1_11c4g")
+bounciness = 0.0
+friction = 0.1
+startPos = Vector2(500, 592)
+bodyTexture = ExtResource("2_j7fm5")
+bodyMaterial = ExtResource("3_wqpa6")
+bodyPointCount = 16
+bodySpacing = 25.0
+bodyMinAngle = 171.419
+bodyCollisionRadius = 35.0
+armsTexture = ExtResource("2_j7fm5")
+armsMaterial = ExtResource("4_82rxl")
+armsMaterial2 = ExtResource("5_bu5vs")
+armsConnectionPointFromTop = 5
+armsPointCount = 8
+armsSpacing = 25.0
+armsMinAngle = 143.104
+armsCollisionRadius = 18.0
+shoulderDistance = 36.766
+inflateForce = 4000.0
+softness = 0.05
+
+[node name="Grabber" type="Node2D" parent="."]
+script = ExtResource("6_ylqdr")
+
+[node name="Area2D" type="Area2D" parent="Grabber"]
+position = Vector2(1, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grabber/Area2D"]
+shape = SubResource("CircleShape2D_0kjeg")

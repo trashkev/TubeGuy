@@ -60,6 +60,7 @@ var drawDebugDots :bool = false
 var debugDrawPos = []
 var debugDrawCol = []
 
+@onready var grabber :Node2D = $Grabber
 ########## UTILITY FUNCTIONS ###########
 func Distance(p0:Point,p1:Point):
 	var dx = p1.x - p0.x
@@ -204,7 +205,7 @@ class QuadStripMesh:
 	var mesh :Mesh
 	var material :ShaderMaterial
 	var texture :Texture2D
-	var meshInstance2d
+	var meshInstance2d :MeshInstance2D
 	func _init(p_points :Array[Point],p_mesh :Mesh,p_material :Material,p_texture :Texture2D):
 		self.points = p_points
 		self.mesh = p_mesh
@@ -549,14 +550,19 @@ func GenerateMeshes():
 		quadStripMeshes.append(armQuadStripMesh)
 		
 	#create, setup, and add as child each quadstripmesh's meshInstance2D
-	for quadStripMesh in quadStripMeshes:
-		quadStripMesh.meshInstance2d = MeshInstance2D.new()
-		quadStripMesh.meshInstance2d.texture = quadStripMesh.texture
-		quadStripMesh.meshInstance2d.mesh = quadStripMesh.mesh
-		quadStripMesh.meshInstance2d.material = quadStripMesh.material
-		quadStripMesh.meshInstance2d.z_index = -1
-		add_child(quadStripMesh.meshInstance2d)
-
+	for i in quadStripMeshes.size():
+		var z
+		if i == 0:
+			z = -1
+		else:
+			z = 2
+		quadStripMeshes[i].meshInstance2d = MeshInstance2D.new()
+		quadStripMeshes[i].meshInstance2d.texture = quadStripMeshes[i].texture
+		quadStripMeshes[i].meshInstance2d.mesh = quadStripMeshes[i].mesh
+		quadStripMeshes[i].meshInstance2d.material = quadStripMeshes[i].material
+		quadStripMeshes[i].meshInstance2d.z_index = z
+		add_child(quadStripMeshes[i].meshInstance2d)
+	
 func UpdateMeshes():
 	for quadStripMesh in quadStripMeshes:
 		quadStripMesh.Update()
@@ -606,8 +612,15 @@ func _ready():
 	GenerateGuy()
 	SetUpCollisions()
 	GenerateMeshes()
+	
 
 func _physics_process(delta):
+	var leftHandPoint = arms[0].points[arms[0].points.size()-1]
+	var rightHandPoint = arms[1].points[arms[1].points.size()-1]
+	var leftHandPos = Vector2(leftHandPoint.x,leftHandPoint.y)
+	var rightHandPos = Vector2(rightHandPoint.x,rightHandPoint.y)
+	var grabberPos = Vector2((leftHandPos.x + rightHandPos.x)/2,(leftHandPos.y + rightHandPos.y)/2)
+	grabber.global_position = grabberPos
 	
 	time+= delta
 	

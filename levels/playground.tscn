@@ -1,75 +1,146 @@
-[gd_scene load_steps=9 format=3 uid="uid://d2npb50luppe1"]
+[gd_scene load_steps=10 format=3 uid="uid://d2npb50luppe1"]
 
 [ext_resource type="Texture2D" uid="uid://b748du3ojjhe5" path="res://texture_08.png" id="1_f5dli"]
-[ext_resource type="Script" path="res://levels/VerletObject.gd" id="2_l8ams"]
-[ext_resource type="PackedScene" uid="uid://h0od5oy1b0fu" path="res://ball_obstacle.tscn" id="3_b123x"]
+[ext_resource type="PackedScene" uid="uid://dn5yrpk1ynetn" path="res://TubeGuy.tscn" id="2_0bhbx"]
 [ext_resource type="PackedScene" uid="uid://0joi3mldqkq7" path="res://platform.tscn" id="3_meopj"]
-[ext_resource type="Texture2D" uid="uid://bnbunenbh5hi8" path="res://guy1.png" id="4_qv8xk"]
-[ext_resource type="Material" uid="uid://q3wuje0hmlo0" path="res://Materials/TubeGuyBody_01.tres" id="5_omcxf"]
-[ext_resource type="Material" uid="uid://bebs01ux53gxc" path="res://Materials/TubeGuyArms_01.tres" id="7_y3c68"]
-[ext_resource type="Material" uid="uid://bq3pq45ee472f" path="res://Materials/TubeGuyArms_02.tres" id="8_550hb"]
+[ext_resource type="Shader" path="res://VerletQuadStrip.gdshader" id="3_u7iwk"]
+[ext_resource type="PackedScene" uid="uid://bea2rx82fkqtf" path="res://sports_ball.tscn" id="8_bfo2u"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ujbvr"]
+resource_local_to_scene = true
+shader = ExtResource("3_u7iwk")
+shader_parameter/pointPos = null
+shader_parameter/pointCount = null
+shader_parameter/mainColor = Vector3(1, 0, 0)
+shader_parameter/tiling = Vector2(5.3, 1)
+shader_parameter/offset = Vector2(0, 0)
+shader_parameter/width = 40.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_53nuy"]
+resource_local_to_scene = true
+shader = ExtResource("3_u7iwk")
+shader_parameter/pointPos = PackedVector2Array()
+shader_parameter/pointCount = null
+shader_parameter/mainColor = Vector3(0, 1, 0)
+shader_parameter/tiling = Vector2(10, 0.6)
+shader_parameter/offset = Vector2(0.2, -0.5)
+shader_parameter/width = 20.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dsrta"]
+resource_local_to_scene = true
+shader = ExtResource("3_u7iwk")
+shader_parameter/pointPos = PackedVector2Array()
+shader_parameter/pointCount = null
+shader_parameter/mainColor = Vector3(0, 1.025, 0)
+shader_parameter/tiling = Vector2(10, 0.6)
+shader_parameter/offset = Vector2(0.2, -0.5)
+shader_parameter/width = 20.0
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_iejhl"]
+bounce = 0.84
 
 [node name="Playground" type="Node2D"]
+
+[node name="TubeGuy" parent="." instance=ExtResource("2_0bhbx")]
+bodyMaterial = SubResource("ShaderMaterial_ujbvr")
+armsMaterial = SubResource("ShaderMaterial_53nuy")
+armsMaterial2 = SubResource("ShaderMaterial_dsrta")
+shoulderDistance = 33.542
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = -2
 texture_repeat = 2
-position = Vector2(453, 230)
-scale = Vector2(0.403459, 0.403459)
+position = Vector2(882, -69)
+scale = Vector2(0.465868, 0.465868)
 texture = ExtResource("1_f5dli")
 region_enabled = true
-region_rect = Rect2(-1004, -625, 3802, 2400)
+region_rect = Rect2(-1004, -625, 5169, 3212)
 
-[node name="VerletObject" type="Node2D" parent="."]
-texture_filter = 1
-texture_repeat = 2
-script = ExtResource("2_l8ams")
-bounciness = 0.0
-friction = 0.1
-startPos = Vector2(500, 592)
-bodyTexture = ExtResource("4_qv8xk")
-bodyMaterial = ExtResource("5_omcxf")
-bodyPointCount = 16
-bodySpacing = 25.0
-bodyMinAngle = 171.419
-bodyCollisionRadius = 35.0
-armsTexture = ExtResource("4_qv8xk")
-armsMaterial = ExtResource("7_y3c68")
-armsMaterial2 = ExtResource("8_550hb")
-armsConnectionPointFromTop = 8
-armsPointCount = 6
-armsSpacing = 25.0
-armsMinAngle = 143.104
-armsCollisionRadius = 18.0
-shoulderDistance = 20.646
-inflateForce = 4000.0
-softness = 0.05
+[node name="Node2D2" type="Node2D" parent="."]
 
-[node name="Platform" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(554, 1112)
+[node name="Platform" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(972, 1123)
 scale = Vector2(2.2, 13.44)
 
-[node name="Platform2" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(2253, 363)
-rotation = 1.57079
+[node name="Platform2" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(888, -973)
+scale = Vector2(2.2, 13.44)
 
-[node name="Platform3" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(-466, 336)
-rotation = 1.57079
+[node name="Platform3" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(-1234, 28)
+scale = Vector2(2.2, 20.16)
 
-[node name="Platform4" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(1280, 415)
-rotation = 3.25112
-scale = Vector2(1.24, 1.68)
+[node name="Platform10" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(1450, 164)
+rotation = 1.24878
+scale = Vector2(0.170828, 0.274953)
 
-[node name="Platform5" parent="." instance=ExtResource("3_meopj")]
-position = Vector2(-1151, -82)
-rotation = 3.14159
-scale = Vector2(1.24, 1)
+[node name="Platform9" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(1791, 164)
+rotation = 1.83259
+scale = Vector2(0.170828, 0.274953)
+
+[node name="Platform6" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(1617, 249)
+scale = Vector2(0.274953, 0.274953)
+
+[node name="Platform8" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(1450, 164)
+rotation = 1.24878
+scale = Vector2(0.170828, 0.274953)
+
+[node name="Platform7" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(1791, 164)
+rotation = 1.83259
+scale = Vector2(0.170828, 0.274953)
+
+[node name="Platform5" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(1617, 249)
+scale = Vector2(0.274953, 0.274953)
+
+[node name="Platform4" parent="Node2D2" instance=ExtResource("3_meopj")]
+position = Vector2(3279, 5)
+scale = Vector2(2.2, 20.48)
 
 [node name="Node2D" type="Node2D" parent="."]
 position = Vector2(590, 622)
 
-[node name="BallObstacle3" parent="." instance=ExtResource("3_b123x")]
-position = Vector2(140, 386)
-scale = Vector2(1.07672, 1.07672)
+[node name="SportsBall" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(391, 506)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall2" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(522, 509)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall3" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(268, 357)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall4" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(217, 490)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall5" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(137, 335)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall6" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(193, 242)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall7" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(308, 159)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall8" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(183, 63)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="SportsBall9" parent="." instance=ExtResource("8_bfo2u")]
+position = Vector2(354, 31)
+physics_material_override = SubResource("PhysicsMaterial_iejhl")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(1027, 83)
+zoom = Vector2(0.555, 0.555)
